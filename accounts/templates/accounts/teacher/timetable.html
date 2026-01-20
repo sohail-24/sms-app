@@ -1,0 +1,698 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}My Timetable{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timetable-cell {
+        height: 100px;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        position: relative;
+    }
+    .timetable-cell.occupied {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    .class-block {
+        background-color: #fff;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .class-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .class-block .subject {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    .class-block .teacher {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    .class-block .room {
+        font-size: 0.8rem;
+        color: #888;
+    }
+    .time-slot {
+        font-weight: 500;
+        color: #2c3e50;
+        padding: 10px;
+        background: #f8f9fa;
+        border-right: 2px solid #dee2e6;
+    }
+    .day-header {
+        font-weight: 600;
+        color: #2c3e50;
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .form-check-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .timetable-controls {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .current-settings {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 10px;
+    }
+    
+    /* Animation for new schedule additions */
+    @keyframes fadeInScale {
+        0% {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    /* Highlight effect for newly added schedules */
+    .timetable-cell.newly-added {
+        background-color: rgba(46, 204, 113, 0.1) !important;
+        transition: background-color 0.3s ease;
+    }
+    
+    /* Loading spinner styles */
+    .btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    
+    /* Success alert styling */
+    .alert-success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .alert-success i {
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">My Timetable</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Timetable</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Timetable Controls -->
+    <div class="timetable-controls">
+        <div class="row">
+        <div class="col-md-6">
+                <div class="d-flex gap-3 align-items-center">
+                    <select class="form-select w-auto" id="classFilter">
+                        <option value="">All Classes</option>
+                        {% for class in classes %}
+                            <option value="{{ class.id }}">{{ class.name }} - {{ class.section }}</option>
+                        {% endfor %}
+                </select>
+                    <select class="form-select w-auto" id="academicYearFilter">
+                        <option value="">All Years</option>
+                    <option>2024-2025</option>
+                    <option>2023-2024</option>
+                </select>
+                    <select class="form-select w-auto" id="termFilter">
+                        <option value="">All Terms</option>
+                    <option>Term 1</option>
+                    <option>Term 2</option>
+                    <option>Term 3</option>
+                </select>
+            </div>
+                <div class="current-settings">
+                    <i class="fas fa-clock text-primary"></i> 
+                    Current schedule: {{ start_hour|stringformat:"02d" }}:00 - {{ end_hour|stringformat:"02d" }}:00 
+                    ({{ slot_duration }} min slots, {{ time_slots|length }} periods)
+                    <br>
+                    <i class="fas fa-calendar-alt text-success"></i>
+                    Total scheduled classes: <span id="scheduleCount">{{ schedules.count }}</span>
+                </div>
+        </div>
+        <div class="col-md-6 text-end">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#timeSettingsModal">
+                        <i class="fas fa-cog"></i> Time Settings
+                    </button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                <i class="fas fa-plus"></i> Add Class
+            </button>
+                </div>
+                <div class="btn-group ms-2" role="group">
+                    <button class="btn btn-outline-secondary" onclick="exportTimetable()">
+                <i class="fas fa-download"></i> Export
+            </button>
+                    <button class="btn btn-outline-secondary" onclick="printTimetable()">
+                <i class="fas fa-print"></i> Print
+            </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">Weekly Timetable</h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="schedule-summary">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="scheduleSummary">
+                                {{ schedules.count }} classes scheduled across {{ days|length }} days
+                            </span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="time-slot">Time</th>
+                            <th class="day-header">Monday</th>
+                            <th class="day-header">Tuesday</th>
+                            <th class="day-header">Wednesday</th>
+                            <th class="day-header">Thursday</th>
+                            <th class="day-header">Friday</th>
+                            <th class="day-header">Saturday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in timetable_data %}
+                        <tr>
+                            <td class="time-slot">{{ row.time_slot.display }}</td>
+                            {% for cell in row.cells %}
+                            <td class="timetable-cell {% if cell.occupied %}occupied{% endif %}" 
+                                data-day="{{ cell.day }}" data-time="{{ row.time_slot.start }}-{{ row.time_slot.end }}">
+                                {% if cell.schedule %}
+                                    <div class="class-block" data-schedule-id="{{ cell.schedule.id }}">
+                                        <div class="subject">{{ cell.schedule.course.title }}</div>
+                                        <div class="teacher">{{ cell.schedule.course.teacher.get_full_name }}</div>
+                                        <div class="room">{{ cell.schedule.room }}</div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Class</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.course.id_for_label }}" class="form-label">Course/Subject</label>
+                        {{ form.course }}
+                        {% if form.course.errors %}
+                        <div class="text-danger">{{ form.course.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.day.id_for_label }}" class="form-label">Day</label>
+                        {{ form.day }}
+                        {% if form.day.errors %}
+                        <div class="text-danger">{{ form.day.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.start_time.id_for_label }}" class="form-label">Start Time</label>
+                            {{ form.start_time }}
+                            {% if form.start_time.errors %}
+                            <div class="text-danger">{{ form.start_time.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.end_time.id_for_label }}" class="form-label">End Time</label>
+                            {{ form.end_time }}
+                            {% if form.end_time.errors %}
+                            <div class="text-danger">{{ form.end_time.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.room.id_for_label }}" class="form-label">Room</label>
+                        {{ form.room }}
+                        {% if form.room.errors %}
+                        <div class="text-danger">{{ form.room.errors }}</div>
+                        {% endif %}
+                        
+                        <!-- Room suggestions datalist -->
+                        <datalist id="room-suggestions">
+                            <option value="Room 101">
+                            <option value="Room 102">
+                            <option value="Room 103">
+                            <option value="Room 104">
+                            <option value="Lab 201">
+                            <option value="Lab 202">
+                            <option value="Lab 203">
+                            <option value="Computer Lab">
+                            <option value="Physics Lab">
+                            <option value="Chemistry Lab">
+                            <option value="Biology Lab">
+                            <option value="Library">
+                            <option value="Auditorium">
+                            <option value="Conference Room">
+                        </datalist>
+                    </div>
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitClassForm()">Add Class</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Time Settings Modal -->
+<div class="modal fade" id="timeSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Timetable Time Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="timeSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Time (Hour)</label>
+                            <select class="form-select" id="startHour">
+                                {% for hour in "0123456789012345678901234"|make_list %}
+                                    {% if forloop.counter0 <= 23 %}
+                                    <option value="{{ forloop.counter0 }}" {% if forloop.counter0 == start_hour %}selected{% endif %}>
+                                        {{ forloop.counter0|stringformat:"02d" }}:00 ({{ forloop.counter0|add:"0"|time:"g A" }})
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Time (Hour)</label>
+                            <select class="form-select" id="endHour">
+                                {% for hour in "0123456789012345678901234"|make_list %}
+                                    {% if forloop.counter0 <= 23 %}
+                                    <option value="{{ forloop.counter0 }}" {% if forloop.counter0 == end_hour %}selected{% endif %}>
+                                        {{ forloop.counter0|stringformat:"02d" }}:00 ({{ forloop.counter0|add:"0"|time:"g A" }})
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Class Duration (Minutes)</label>
+                        <select class="form-select" id="slotDuration">
+                            <option value="30" {% if slot_duration == 30 %}selected{% endif %}>30 minutes</option>
+                            <option value="45" {% if slot_duration == 45 %}selected{% endif %}>45 minutes</option>
+                            <option value="60" {% if slot_duration == 60 %}selected{% endif %}>60 minutes (1 hour)</option>
+                            <option value="90" {% if slot_duration == 90 %}selected{% endif %}>90 minutes (1.5 hours)</option>
+                            <option value="120" {% if slot_duration == 120 %}selected{% endif %}>120 minutes (2 hours)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Working Days</label>
+                        <div class="form-check-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="mondayCheck" checked>
+                                <label class="form-check-label" for="mondayCheck">Monday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tuesdayCheck" checked>
+                                <label class="form-check-label" for="tuesdayCheck">Tuesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="wednesdayCheck" checked>
+                                <label class="form-check-label" for="wednesdayCheck">Wednesday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="thursdayCheck" checked>
+                                <label class="form-check-label" for="thursdayCheck">Thursday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fridayCheck" checked>
+                                <label class="form-check-label" for="fridayCheck">Friday</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="saturdayCheck" checked>
+                                <label class="form-check-label" for="saturdayCheck">Saturday</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Preview:</strong> Your timetable will show <span id="previewSlots">0</span> time slots from <span id="previewStart">8:00 AM</span> to <span id="previewEnd">5:00 PM</span>.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="applyTimeSettings()">Apply Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make timetable cells droppable
+    const cells = document.querySelectorAll('.timetable-cell');
+    cells.forEach(cell => {
+        cell.addEventListener('dragover', e => {
+            e.preventDefault();
+            cell.classList.add('bg-light');
+        });
+
+        cell.addEventListener('dragleave', e => {
+            cell.classList.remove('bg-light');
+        });
+
+        cell.addEventListener('drop', e => {
+            e.preventDefault();
+            cell.classList.remove('bg-light');
+            // Handle drop logic here
+        });
+    });
+
+    // Make class blocks draggable
+    const classBlocks = document.querySelectorAll('.class-block');
+    classBlocks.forEach(block => {
+        block.setAttribute('draggable', true);
+        block.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', block.innerHTML);
+            block.classList.add('opacity-50');
+        });
+
+        block.addEventListener('dragend', e => {
+            block.classList.remove('opacity-50');
+        });
+    });
+});
+
+function submitClassForm() {
+    console.log('submitClassForm called');
+    const form = document.getElementById('addClassForm');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#addClassModal .btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding Class...';
+    submitBtn.disabled = true;
+    
+    fetch('{% url "teacher_timetable" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.page-header').nextSibling);
+            
+            // Close modal
+            $('#addClassModal').modal('hide');
+            
+            // Clear form
+            form.reset();
+            
+            // Reload the page after a short delay to show the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            // Show validation errors
+            console.error('Form errors:', data.errors);
+            
+            // Clear previous error messages
+            document.querySelectorAll('.text-danger').forEach(el => el.remove());
+            
+            // Display new errors
+            for (const [field, errors] of Object.entries(data.errors)) {
+                if (field === 'general') {
+                    // Show general errors in modal
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger';
+                    errorDiv.textContent = errors.join(', ');
+                    const modalBody = document.querySelector('#addClassModal .modal-body');
+                    modalBody.insertBefore(errorDiv, modalBody.firstChild);
+                } else {
+                    const fieldElement = document.querySelector(`[name="${field}"]`);
+                    if (fieldElement) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'text-danger';
+                        errorDiv.textContent = errors.join(', ');
+                        fieldElement.parentNode.insertBefore(errorDiv, fieldElement.nextSibling);
+                    }
+                }
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        alert('An error occurred while adding the class.');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function addScheduleToTimetable(scheduleData) {
+    // Find the correct cell in the timetable
+    const dayIndex = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(scheduleData.day);
+    if (dayIndex === -1) return;
+    
+    // Find the time slot row
+    const timeSlots = document.querySelectorAll('.time-slot');
+    let targetRow = null;
+    
+    for (let i = 0; i < timeSlots.length; i++) {
+        const timeText = timeSlots[i].textContent.trim();
+        if (timeText.includes(scheduleData.start_time)) {
+            targetRow = timeSlots[i].closest('tr');
+            break;
+        }
+    }
+    
+    if (targetRow) {
+        // Get the cell for the specific day
+        const cells = targetRow.querySelectorAll('.timetable-cell');
+        const targetCell = cells[dayIndex];
+        
+        if (targetCell) {
+            // Create the new class block
+            const classBlock = document.createElement('div');
+            classBlock.className = 'class-block';
+            classBlock.setAttribute('data-schedule-id', scheduleData.id);
+            classBlock.style.animation = 'fadeInScale 0.5s ease-in-out';
+            
+            classBlock.innerHTML = `
+                <div class="subject">${scheduleData.course_title}</div>
+                <div class="teacher">${scheduleData.teacher_name}</div>
+                <div class="room">${scheduleData.room}</div>
+            `;
+            
+            // Add hover effect and make draggable
+            classBlock.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            });
+            
+            classBlock.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            });
+            
+            // Make draggable
+            classBlock.setAttribute('draggable', true);
+            classBlock.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', classBlock.innerHTML);
+                classBlock.classList.add('opacity-50');
+            });
+            
+            classBlock.addEventListener('dragend', e => {
+                classBlock.classList.remove('opacity-50');
+            });
+            
+            // Clear existing content and add new class
+            targetCell.innerHTML = '';
+            targetCell.appendChild(classBlock);
+            targetCell.classList.add('occupied');
+            
+            // Add highlight effect
+            targetCell.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+            setTimeout(() => {
+                targetCell.style.backgroundColor = '';
+            }, 2000);
+            
+            // Update schedule count
+            const scheduleCountElement = document.getElementById('scheduleCount');
+            if (scheduleCountElement) {
+                const currentCount = parseInt(scheduleCountElement.textContent);
+                scheduleCountElement.textContent = currentCount + 1;
+                
+                // Add a brief highlight effect to the count
+                scheduleCountElement.style.color = '#28a745';
+                scheduleCountElement.style.fontWeight = 'bold';
+                setTimeout(() => {
+                    scheduleCountElement.style.color = '';
+                    scheduleCountElement.style.fontWeight = '';
+                }, 2000);
+                
+                // Update schedule summary
+                updateScheduleSummary();
+            }
+        }
+    }
+}
+
+function updateScheduleSummary() {
+    const scheduleCountElement = document.getElementById('scheduleCount');
+    const scheduleSummaryElement = document.getElementById('scheduleSummary');
+    
+    if (scheduleCountElement && scheduleSummaryElement) {
+        const count = parseInt(scheduleCountElement.textContent);
+        scheduleSummaryElement.textContent = `${count} classes scheduled across 6 days`;
+    }
+}
+
+function exportTimetable() {
+    // Add export functionality here
+    alert('Export functionality will be implemented soon.');
+}
+
+function printTimetable() {
+    window.print();
+}
+
+function applyTimeSettings() {
+    const startHour = document.getElementById('startHour').value;
+    const endHour = document.getElementById('endHour').value;
+    const duration = document.getElementById('slotDuration').value;
+    
+    // Validate settings
+    if (parseInt(startHour) >= parseInt(endHour)) {
+        alert('Start time must be before end time.');
+        return;
+    }
+    
+    // Apply settings by redirecting with parameters
+    const url = new URL(window.location.href);
+    url.searchParams.set('start_hour', startHour);
+    url.searchParams.set('end_hour', endHour);
+    url.searchParams.set('duration', duration);
+    
+    // Close modal and reload with new settings
+    $('#timeSettingsModal').modal('hide');
+    window.location.href = url.toString();
+}
+
+function updatePreview() {
+    const startHour = parseInt(document.getElementById('startHour').value);
+    const endHour = parseInt(document.getElementById('endHour').value);
+    const duration = parseInt(document.getElementById('slotDuration').value);
+    
+    if (startHour < endHour) {
+        const totalMinutes = (endHour - startHour) * 60;
+        const slots = Math.floor(totalMinutes / duration);
+        
+        document.getElementById('previewSlots').textContent = slots;
+        document.getElementById('previewStart').textContent = formatTime(startHour, 0);
+        document.getElementById('previewEnd').textContent = formatTime(endHour, 0);
+    }
+}
+
+function formatTime(hour, minute) {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+}
+
+// Add event listeners for live preview
+document.addEventListener('DOMContentLoaded', function() {
+    const startHourSelect = document.getElementById('startHour');
+    const endHourSelect = document.getElementById('endHour');
+    const durationSelect = document.getElementById('slotDuration');
+    
+    if (startHourSelect && endHourSelect && durationSelect) {
+        startHourSelect.addEventListener('change', updatePreview);
+        endHourSelect.addEventListener('change', updatePreview);
+        durationSelect.addEventListener('change', updatePreview);
+        
+        // Initial preview update
+        updatePreview();
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,206 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Attendance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Attendance Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="attendanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Overall Attendance</h6>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ overall_attendance }}%" aria-valuenow="{{ overall_attendance }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">Total Classes</small>
+                            <small class="text-muted">{{ total_classes }}</small>
+                        </div>
+                    </div>
+
+                    <div class="attendance-stats">
+                        <div class="row g-0">
+                            <div class="col-6 border-end">
+                                <div class="p-3 text-center">
+                                    <h4 class="mb-1">{{ classes_present }}</h4>
+                                    <span class="text-success">Present</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 text-center">
+                                    <h4 class="mb-1">{{ classes_absent }}</h4>
+                                    <span class="text-danger">Absent</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course-wise Attendance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Course-wise Attendance</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="semesterDropdown" data-bs-toggle="dropdown">
+                            {{ current_semester }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% for semester in available_semesters %}
+                            <li><a class="dropdown-item" href="?semester={{ semester }}">{{ semester }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Total Classes</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Attendance %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in course_attendance %}
+                                <tr>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.total_classes }}</td>
+                                    <td>{{ course.classes_present }}</td>
+                                    <td>{{ course.classes_absent }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 5px;">
+                                            <div class="progress-bar {% if course.attendance_percentage >= 75 %}bg-success{% elif course.attendance_percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ course.attendance_percentage }}%" 
+                                                 aria-valuenow="{{ course.attendance_percentage }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="mt-1 d-block">{{ course.attendance_percentage }}%</small>
+                                    </td>
+                                    <td>
+                                        {% if course.attendance_percentage >= 75 %}
+                                            <span class="badge bg-success">Good</span>
+                                        {% elif course.attendance_percentage >= 60 %}
+                                            <span class="badge bg-warning">Warning</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Critical</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No attendance records found for this semester.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Calendar View -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Attendance Calendar</h5>
+                </div>
+                <div class="card-body">
+                    <div id="attendanceCalendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script>
+    // Attendance Overview Chart
+    var ctx = document.getElementById('attendanceChart').getContext('2d');
+    var attendanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: 'Attendance %',
+                data: {{ monthly_attendance }},
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Initialize Calendar
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('attendanceCalendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: {{ calendar_events|safe }},
+            eventClick: function(info) {
+                alert(info.event.title);
+            }
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %} 

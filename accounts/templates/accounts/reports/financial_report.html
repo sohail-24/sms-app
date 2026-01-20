@@ -1,0 +1,168 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Financial Overview -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Financial Overview</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Total Revenue:</strong> ${{ financial_summary.total_revenue }}</li>
+                    <li><strong>Total Expenses:</strong> ${{ financial_summary.total_expenses }}</li>
+                    <li><strong>Net Balance:</strong> ${{ financial_summary.net_balance }}</li>
+                    <li><strong>Report Period:</strong> {{ start_date }} to {{ end_date }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Financial Summary</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Total Revenue</h6>
+                                <h3>${{ financial_summary.total_revenue }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Total Expenses</h6>
+                                <h3>${{ financial_summary.total_expenses }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Net Balance</h6>
+                                <h3>${{ financial_summary.net_balance }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Profit Margin</h6>
+                                <h3>{{ financial_summary.profit_margin }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Breakdown -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Revenue Breakdown</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Percentage</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for revenue in revenue_breakdown %}
+                    <tr>
+                        <td>{{ revenue.category }}</td>
+                        <td>${{ revenue.amount }}</td>
+                        <td>{{ revenue.percentage }}%</td>
+                        <td>{{ revenue.description }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No revenue data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Breakdown -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Expense Breakdown</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Percentage</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expense_breakdown %}
+                    <tr>
+                        <td>{{ expense.category }}</td>
+                        <td>${{ expense.amount }}</td>
+                        <td>{{ expense.percentage }}%</td>
+                        <td>{{ expense.description }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No expense data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trends -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Monthly Trends</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Revenue</th>
+                        <th>Expenses</th>
+                        <th>Net Balance</th>
+                        <th>Profit Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trend in monthly_trends %}
+                    <tr>
+                        <td>{{ trend.month }}</td>
+                        <td>${{ trend.revenue }}</td>
+                        <td>${{ trend.expenses }}</td>
+                        <td>${{ trend.net_balance }}</td>
+                        <td>{{ trend.profit_margin }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No monthly trend data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

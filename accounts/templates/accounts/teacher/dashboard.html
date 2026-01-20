@@ -1,0 +1,543 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}Teacher Dashboard{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2>Welcome, {{ request.user.teacher_profile.get_full_name }}!</h2>
+                <p class="mb-0">Track your teaching activities and manage your classes</p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_students }}</div>
+                <div class="stat-label">Total Students</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 12% from last month
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ active_courses }}</div>
+                <div class="stat-label">Active Courses</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 5% from last month
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ classes_today }}</div>
+                <div class="stat-label">Today's Classes</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-clock"></i> Next class in 30 mins
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ attendance_rate }}%</div>
+                <div class="stat-label">Attendance Rate</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 3% from last week
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Course Overview -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">My Courses</h5>
+                    <a href="{% url 'teacher_courses' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Class</th>
+                                    <th>Schedule</th>
+                                    <th>Students</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in my_courses %}
+                                <tr>
+                                    <td>{{ course.course_code }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.class_section.full_name }}</td>
+                                    <td>{{ course.schedules.count }}</td>
+                                    <td>{{ course.active_student_count }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'teacher_course_detail' course.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'teacher_assignments' %}?course={{ course.id }}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-tasks"></i>
+                                            </a>
+                                            <a href="{% url 'teacher_grades' %}?course={{ course.id }}" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-graduation-cap"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No courses assigned yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Schedule -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Today's Schedule</h5>
+                    <a href="{% url 'teacher_timetable' %}" class="btn btn-sm btn-primary">View Full</a>
+                </div>
+                <div class="card-body">
+                    {% if today_schedule %}
+                        <div class="list-group">
+                            {% for schedule in today_schedule %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ schedule.course.title }}</h6>
+                                    <small class="text-muted">{{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}</small>
+                                </div>
+                                <p class="mb-1">{{ schedule.course.class_section.full_name }}</p>
+                                <small class="text-muted">Room: {{ schedule.room }}</small>
+                                <div class="mt-2">
+                                    <a href="{% url 'teacher_attendance' %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-clipboard-check"></i> Take Attendance
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No classes scheduled for today.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row mt-4">
+        <!-- Top Performing Students -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Top Performing Students</h5>
+                    <a href="{% url 'teacher_students' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if top_students %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Class</th>
+                                        <th>Performance</th>
+                                        <th>Attendance</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in top_students %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if student.photo %}
+                                                    <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                                                {% else %}
+                                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <div class="fw-bold">{{ student.get_full_name }}</div>
+                                                    <small class="text-muted">{{ student.student_id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ student.class_section.full_name }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" style="width: {{ student.performance }}%">
+                                                    {{ student.performance }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if student.attendance_percentage >= 90 %}bg-success{% elif student.attendance_percentage >= 80 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ student.attendance_percentage }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'teacher_student_detail' student.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No students found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Students Needing Attention -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Students Needing Attention</h5>
+                    <a href="{% url 'teacher_students' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if low_attendance_students %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Class</th>
+                                        <th>Attendance</th>
+                                        <th>Performance</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in low_attendance_students %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if student.photo %}
+                                                    <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}" class="rounded-circle me-2" width="32" height="32">
+                                                {% else %}
+                                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <div class="fw-bold">{{ student.get_full_name }}</div>
+                                                    <small class="text-muted">{{ student.student_id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ student.class_section.full_name }}</td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                {{ student.attendance_percentage }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if student.performance >= 80 %}bg-success{% elif student.performance >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ student.performance }}%">
+                                                    {{ student.performance }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{% url 'teacher_student_detail' student.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'teacher_student_attendance' student.id %}" class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p class="text-muted mb-0">All students are performing well!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-section {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .stat-trend {
+        font-size: 0.85rem;
+        color: #28a745;
+    }
+
+    .stat-trend i {
+        margin-right: 5px;
+    }
+
+    .trend-up {
+        color: #28a745;
+    }
+
+    .trend-down {
+        color: #dc3545;
+    }
+
+    .activity-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+
+    .activity-item {
+        padding: 10px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(52, 152, 219, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn i {
+        font-size: 0.8rem;
+    }
+
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+        padding: 15px;
+    }
+
+    .list-group-item:first-child {
+        border-top: none;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    /* Student section styles */
+    .text-pink {
+        color: #e91e63 !important;
+    }
+
+    .progress {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 20px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(52, 152, 219, 0.05);
+        transform: translateY(-1px);
+        transition: all 0.3s ease;
+    }
+
+    .student-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .student-avatar-placeholder {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+        border-radius: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+        
+        .btn-sm {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendance Chart
+        var ctx = document.getElementById('attendanceChart').getContext('2d');
+        var attendanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                datasets: [{
+                    label: 'Attendance %',
+                    data: [95, 88, 92, 85, 90, 93],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

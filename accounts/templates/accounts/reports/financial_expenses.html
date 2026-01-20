@@ -1,0 +1,158 @@
+{% extends 'accounts/reports/financial_report.html' %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Expense Summary Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Expense Summary</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Total Expenses:</strong> ${{ total_expenses }}</li>
+                    <li><strong>Report Period:</strong> {{ start_date }} to {{ end_date }}</li>
+                </ul>
+                <div class="mt-3">
+                    <canvas id="expenseTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Expense Trend -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Monthly Expense Trend</h5>
+                <div style="height: 300px;">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Details Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Expense Details</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>{{ expense.date|date:"d M Y" }}</td>
+                                <td>{{ expense.title }}</td>
+                                <td>{{ expense.get_type_display }}</td>
+                                <td>{{ expense.description|truncatechars:50 }}</td>
+                                <td class="text-end">${{ expense.amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total:</th>
+                                <th class="text-end">${{ total_expenses }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Type Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Expense Type Summary</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Expense Type</th>
+                                <th class="text-end">Total Amount</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_summary in expense_type_summary %}
+                            <tr>
+                                <td>{{ type_summary.type_display }}</td>
+                                <td class="text-end">${{ type_summary.total }}</td>
+                                <td class="text-end">{{ type_summary.percentage }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Expense Type Chart
+    const expenseTypeCtx = document.getElementById('expenseTypeChart').getContext('2d');
+    new Chart(expenseTypeCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ expense_types|safe }},
+            datasets: [{
+                data: {{ expense_amounts|safe }},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Monthly Trend Chart
+    const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ monthly_labels|safe }},
+            datasets: [{
+                label: 'Monthly Expenses',
+                data: {{ monthly_expenses|safe }},
+                backgroundColor: '#4e73df',
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

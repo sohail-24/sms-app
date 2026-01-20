@@ -1,0 +1,198 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Settings - School Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Settings</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Settings</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <!-- System Settings -->
+        <div class="col-12 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <!-- School Information -->
+                        <h6 class="mb-3">School Information</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">School Name</label>
+                                <input type="text" class="form-control" name="school_name" value="{{ settings.school_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">School Code</label>
+                                <input type="text" class="form-control" name="school_code" value="{{ settings.school_code }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="school_email" value="{{ settings.school_email }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="school_phone" value="{{ settings.school_phone }}" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" name="school_address" rows="2" required>{{ settings.school_address }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Academic Settings -->
+                        <h6 class="mb-3">Academic Settings</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Current Academic Year</label>
+                                <input type="text" class="form-control" name="academic_year" value="{{ settings.academic_year }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Current Term/Semester</label>
+                                <select class="form-select" name="current_term" required>
+                                    <option value="1" {% if settings.current_term == '1' %}selected{% endif %}>First Term</option>
+                                    <option value="2" {% if settings.current_term == '2' %}selected{% endif %}>Second Term</option>
+                                    <option value="3" {% if settings.current_term == '3' %}selected{% endif %}>Third Term</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Grading System</label>
+                                <select class="form-select" name="grading_system" required>
+                                    <option value="percentage" {% if settings.grading_system == 'percentage' %}selected{% endif %}>Percentage</option>
+                                    <option value="letter" {% if settings.grading_system == 'letter' %}selected{% endif %}>Letter Grade</option>
+                                    <option value="gpa" {% if settings.grading_system == 'gpa' %}selected{% endif %}>GPA</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Passing Grade</label>
+                                <input type="number" class="form-control" name="passing_grade" value="{{ settings.passing_grade }}" required>
+                            </div>
+                        </div>
+
+                        <!-- System Preferences -->
+                        <h6 class="mb-3">System Preferences</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Time Zone</label>
+                                <select class="form-select" name="timezone" required>
+                                    <option value="UTC">UTC</option>
+                                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                                    <option value="America/New_York">America/New York (EST)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date Format</label>
+                                <select class="form-select" name="date_format" required>
+                                    <option value="dd/mm/yyyy">DD/MM/YYYY</option>
+                                    <option value="mm/dd/yyyy">MM/DD/YYYY</option>
+                                    <option value="yyyy-mm-dd">YYYY-MM-DD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Notification Settings -->
+                        <h6 class="mb-3">Notification Settings</h6>
+                        <div class="mb-4">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="emailNotifications" name="email_notifications" checked>
+                                <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="smsNotifications" name="sms_notifications">
+                                <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="systemNotifications" name="system_notifications" checked>
+                                <label class="form-check-label" for="systemNotifications">System Notifications</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Settings -->
+        <div class="col-12 col-xl-4">
+            <!-- Maintenance Mode -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Maintenance Mode</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                        <label class="form-check-label" for="maintenanceMode">Enable Maintenance Mode</label>
+                    </div>
+                    <small class="text-muted">When enabled, only administrators can access the system.</small>
+                </div>
+            </div>
+
+            <!-- Backup Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Database Backup</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Last backup: 2024-03-15 10:30 AM</p>
+                    <button class="btn btn-primary w-100">
+                        <i class="fas fa-database me-2"></i> Create Backup
+                    </button>
+                </div>
+            </div>
+
+            <!-- System Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Version:</strong>
+                        <span class="text-muted">1.0.0</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Last Updated:</strong>
+                        <span class="text-muted">March 15, 2024</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>PHP Version:</strong>
+                        <span class="text-muted">8.1.0</span>
+                    </div>
+                    <div>
+                        <strong>Database:</strong>
+                        <span class="text-muted">MySQL 8.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle maintenance mode toggle
+    document.getElementById('maintenanceMode').addEventListener('change', function() {
+        if (this.checked) {
+            if (!confirm('Enabling maintenance mode will restrict access to administrators only. Continue?')) {
+                this.checked = false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

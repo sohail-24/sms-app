@@ -1,0 +1,75 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}Grade Module - Teacher Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Grade Module</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>Export Grades
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Course Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="card-title">Select a Course</h5>
+                            <div class="list-group">
+                                {% for course in courses %}
+                                <a href="{% url 'teacher_course_grades' course.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ course.title }}</h6>
+                                            <small class="text-muted">{{ course.class_section.name }} - {{ course.class_section.section }}</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-primary me-2">{{ course.students.count }} Students</span>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% empty %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                                    <h4>No Courses Found</h4>
+                                    <p class="text-muted">You are not assigned to any courses yet.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-group-item {
+        transition: transform 0.2s;
+    }
+    .list-group-item:hover {
+        transform: translateX(5px);
+    }
+    .list-group-item h6 {
+        margin-bottom: 0.25rem;
+    }
+    .badge {
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,187 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Class:</strong> {{ class.name }}</li>
+<li><strong>Section:</strong> {{ class.section }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+<li><strong>Period:</strong> {{ start_date }} to {{ end_date }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Class Overview -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Class Overview</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Total Students:</strong> {{ class.students.count }}</li>
+                    <li><strong>Class Teacher:</strong> {{ class.teacher.get_full_name }}</li>
+                    <li><strong>Total Subjects:</strong> {{ subjects.count }}</li>
+                    <li><strong>Report Period:</strong> {{ start_date }} to {{ end_date }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Performance Summary</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Average Grade</h6>
+                                <h3>{{ average_grade }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Pass Rate</h6>
+                                <h3>{{ pass_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Attendance Rate</h6>
+                                <h3>{{ attendance_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <!-- Grade Distribution -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Grade Distribution</h5>
+                <canvas id="gradeDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Performance -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Subject Performance</h5>
+                <canvas id="subjectPerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Performance Table -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Student Performance</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Roll Number</th>
+                        <th>Average Grade</th>
+                        <th>Attendance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in performance_data %}
+                    <tr>
+                        <td>{{ data.student.get_full_name }}</td>
+                        <td>{{ data.student.roll_number }}</td>
+                        <td>{{ data.average|floatformat:1 }}%</td>
+                        <td>{{ data.attendance|floatformat:1 }}%</td>
+                        <td>
+                            {% if data.average >= 90 %}
+                            <span class="badge bg-success">Excellent</span>
+                            {% elif data.average >= 80 %}
+                            <span class="badge bg-primary">Very Good</span>
+                            {% elif data.average >= 70 %}
+                            <span class="badge bg-info">Good</span>
+                            {% elif data.average >= 60 %}
+                            <span class="badge bg-warning">Fair</span>
+                            {% else %}
+                            <span class="badge bg-danger">Needs Improvement</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No student performance data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Initialize Charts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeDistributionChart').getContext('2d');
+    new Chart(gradeCtx, {
+        type: 'pie',
+        data: {
+            labels: ['A', 'B', 'C', 'D', 'F'],
+            datasets: [{
+                data: {{ grade_distribution }},
+                backgroundColor: [
+                    '#28a745',  // Success green for A
+                    '#17a2b8',  // Info blue for B
+                    '#ffc107',  // Warning yellow for C
+                    '#fd7e14',  // Orange for D
+                    '#dc3545'   // Danger red for F
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Subject Performance Chart
+    const subjectCtx = document.getElementById('subjectPerformanceChart').getContext('2d');
+    new Chart(subjectCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ subject_names|safe }},
+            datasets: [{
+                label: 'Average Score',
+                data: {{ subject_averages }},
+                backgroundColor: '#4e73df'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

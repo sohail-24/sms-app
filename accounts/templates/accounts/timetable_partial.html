@@ -1,0 +1,40 @@
+<div class="timetable-container mt-4">
+    <div class="table-responsive">
+        <table class="table table-bordered timetable">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    {% for day in days %}
+                    <th>{{ day|title }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in timetable_data %}
+                <tr>
+                    <td class="time-slot">{{ row.time_slot.display }}</td>
+                    {% for cell in row.cells %}
+                    <td class="schedule-cell {% if cell.occupied %}occupied{% endif %}" 
+                        data-day="{{ cell.day }}" 
+                        data-time="{{ row.time_slot.start }}"
+                        {% if cell.schedule %}
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Room: {{ cell.schedule.room }}"
+                        {% endif %}>
+                        {% if cell.schedule %}
+                        <div class="schedule-info">
+                            <strong>{{ cell.schedule.course.title }}</strong><br>
+                            {{ cell.schedule.course.teacher.get_full_name }}<br>
+                            <small>Room: {{ cell.schedule.room }}</small>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<span id="scheduleCount" class="d-none">{{ schedules.count }}</span> 

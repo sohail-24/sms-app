@@ -1,0 +1,116 @@
+{% extends 'accounts/base_teacher.html' %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Student Profile: {{ student.get_full_name }}</h2>
+            <small class="text-muted">ID: {{ student.student_id }}</small>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if student.photo %}
+                        <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px; font-size: 48px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    <h4>{{ student.get_full_name }}</h4>
+                    <span class="badge bg-{% if student.status == 'active' %}success{% else %}secondary{% endif %}">{{ student.get_status_display }}</span>
+                    <p class="mt-2 mb-0"><strong>Class:</strong> {{ student.class_section.full_name }}</p>
+                    <p class="mb-0"><strong>Email:</strong> {{ student.email }}</p>
+                    <p class="mb-0"><strong>Phone:</strong> {{ student.phone_number }}</p>
+                    <p class="mb-0"><strong>Gender:</strong> {{ student.get_gender_display }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Academic Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <strong>Attendance:</strong>
+                            <span class="badge bg-{% if student.attendance_percentage >= 75 %}success{% elif student.attendance_percentage >= 50 %}warning{% else %}danger{% endif %}">
+                                {{ student.attendance_percentage|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Performance:</strong>
+                            <span class="badge bg-{% if student.performance >= 75 %}success{% elif student.performance >= 50 %}warning{% else %}danger{% endif %}">
+                                {{ student.performance|floatformat:1 }}%
+                            </span>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Recent Attendance</h6>
+                    {% if recent_attendance %}
+                        <ul class="list-group mb-2">
+                            {% for record in recent_attendance %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ record.date|date:"M d, Y" }} - {{ record.course.title }}
+                                    <span class="badge bg-{% if record.status == 'present' %}success{% else %}danger{% endif %}">{{ record.get_status_display }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No recent attendance records.</p>
+                    {% endif %}
+                    <h6>Recent Grades</h6>
+                    {% if recent_grades %}
+                        <ul class="list-group">
+                            {% for grade in recent_grades %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ grade.subject.title }} - {{ grade.date|date:"M d, Y" }}
+                                    <span class="badge bg-info">{{ grade.score }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No recent grades.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Assignments & Exams</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Recent Assignments</h6>
+                    {% if assignments %}
+                        <ul class="list-group mb-2">
+                            {% for assignment in assignments %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ assignment.title }} ({{ assignment.course.title }})
+                                    <span class="badge bg-secondary">Due: {{ assignment.due_date|date:"M d, Y" }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No recent assignments.</p>
+                    {% endif %}
+                    <h6>Recent Exams</h6>
+                    {% if exams %}
+                        <ul class="list-group">
+                            {% for exam in exams %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ exam.title }} ({{ exam.course.title }})
+                                    <span class="badge bg-secondary">{{ exam.date|date:"M d, Y" }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No recent exams.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

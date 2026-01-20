@@ -1,0 +1,167 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<style>
+    .course-filter {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .course-filter .btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .course-filter .btn.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .course-filter .btn:not(.active) {
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #dee2e6;
+    }
+
+    .course-filter .btn:hover:not(.active) {
+        background-color: #e9ecef;
+    }
+
+    .course-code {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-left: 8px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-column">
+                        <div class="mb-3">
+                            <h4 class="card-title mb-0">Course Materials</h4>
+                            <p class="text-muted small mb-0">View and download course materials</p>
+                        </div>
+                        <div class="course-filter">
+                            <button class="btn active" data-course="all">
+                                <i class="fas fa-layer-group"></i>
+                                All Courses
+                            </button>
+                            {% for course in enrolled_courses %}
+                            <button class="btn" data-course="{{ course.id }}">
+                                <i class="fas fa-book"></i>
+                                {{ course.title }}
+                                <span class="course-code">({{ course.course_code }})</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Materials -->
+    {% if materials_by_course %}
+        {% for course, materials in materials_by_course.items %}
+        <div class="course-section mb-4" data-course-id="{{ course.id }}">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>{{ course.title }}
+                        <small class="text-muted">({{ course.course_code }})</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for material in materials %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0">{{ material.title }}</h5>
+                                        <span class="badge bg-primary">{{ material.get_material_type_display }}</span>
+                                    </div>
+                                    <p class="card-text">{{ material.description|truncatechars:100 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div class="small text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ material.created_at|date:"M d, Y" }}
+                                        </div>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-file me-1"></i>
+                                            {{ material.get_file_size }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="{{ material.file.url }}" class="btn btn-primary w-100" target="_blank">
+                                        <i class="fas fa-download me-2"></i>Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                <h5>No Course Materials Available</h5>
+                <p class="text-muted">There are no materials available for your enrolled courses yet.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.course-filter .btn');
+    const courseSections = document.querySelectorAll('.course-section');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter sections with animation
+            const courseId = this.dataset.course;
+            if (courseId === 'all') {
+                courseSections.forEach(section => {
+                    section.style.display = 'block';
+                    section.style.opacity = '0';
+                    setTimeout(() => {
+                        section.style.opacity = '1';
+                    }, 50);
+                });
+            } else {
+                courseSections.forEach(section => {
+                    if (section.dataset.courseId === courseId) {
+                        section.style.display = 'block';
+                        section.style.opacity = '0';
+                        setTimeout(() => {
+                            section.style.opacity = '1';
+                        }, 50);
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

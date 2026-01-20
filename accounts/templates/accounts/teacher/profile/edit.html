@@ -1,0 +1,255 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - Teacher Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'teacher_profile_edit' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Profile Picture -->
+                        <div class="mb-4 text-center">
+                            <img src="{% if teacher.photo %}{{ teacher.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                 alt="Profile Picture" 
+                                 class="rounded-circle mb-3"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                            <div>
+                                <input type="file" name="photo" class="form-control" accept="image/*">
+                                <small class="text-muted">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF</small>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information -->
+                        <h5 class="mb-3">Basic Information</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" name="first_name" value="{{ teacher.first_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" name="last_name" value="{{ teacher.last_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email" value="{{ teacher.user.email }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" name="phone_number" value="{{ teacher.phone_number }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Information -->
+                        <h5 class="mb-3">Professional Information</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Designation</label>
+                                    <input type="text" class="form-control" name="designation" value="{{ teacher.designation }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Qualification</label>
+                                    <input type="text" class="form-control" name="qualification" value="{{ teacher.qualification }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Experience (years)</label>
+                                    <input type="number" class="form-control" name="experience" value="{{ teacher.experience }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Specialization</label>
+                                    <input type="text" class="form-control" name="specialization" value="{{ teacher.specialization }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <h5 class="mb-3">Contact Information</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" name="address" rows="2">{{ teacher.address }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" name="city" value="{{ teacher.city }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">State</label>
+                                    <input type="text" class="form-control" name="state" value="{{ teacher.state }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Country</label>
+                                    <input type="text" class="form-control" name="country" value="{{ teacher.country }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" name="postal_code" value="{{ teacher.postal_code }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Change Password Section -->
+                        <h5 class="mb-3">Change Password</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" name="current_password" autocomplete="current-password">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" name="new_password" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" name="confirm_password" autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-end">
+                            <a href="{% url 'teacher_profile' %}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'accounts/components/image_cropper_modal.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const firstNameInput = document.querySelector('input[name="first_name"]');
+    const lastNameInput = document.querySelector('input[name="last_name"]');
+    const emailInput = document.querySelector('input[name="email"]');
+
+    // Name validation function
+    function validateName(name) {
+        return /^[a-zA-Z\s]*$/.test(name);
+    }
+
+    // Email validation function
+    function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // Function to show popup message
+    function showPopup(input, message) {
+        // Remove any existing popup
+        const existingPopup = input.parentElement.querySelector('.validation-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Create and show new popup
+        const popup = document.createElement('div');
+        popup.className = 'validation-popup';
+        popup.style.cssText = `
+            position: absolute;
+            background-color: #ff4444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+            z-index: 1000;
+        `;
+        popup.textContent = message;
+        input.parentElement.style.position = 'relative';
+        input.parentElement.appendChild(popup);
+    }
+
+    // Add input event listeners for real-time validation
+    firstNameInput.addEventListener('input', function() {
+        if (!validateName(this.value)) {
+            showPopup(this, 'Name should contain only characters');
+            this.style.borderColor = '#ff4444';
+        } else {
+            const popup = this.parentElement.querySelector('.validation-popup');
+            if (popup) popup.remove();
+            this.style.borderColor = '';
+        }
+    });
+
+    lastNameInput.addEventListener('input', function() {
+        if (!validateName(this.value)) {
+            showPopup(this, 'Name should contain only characters');
+            this.style.borderColor = '#ff4444';
+        } else {
+            const popup = this.parentElement.querySelector('.validation-popup');
+            if (popup) popup.remove();
+            this.style.borderColor = '';
+        }
+    });
+
+    emailInput.addEventListener('input', function() {
+        if (!validateEmail(this.value)) {
+            showPopup(this, 'Please enter a valid email address');
+            this.style.borderColor = '#ff4444';
+        } else {
+            const popup = this.parentElement.querySelector('.validation-popup');
+            if (popup) popup.remove();
+            this.style.borderColor = '';
+        }
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        let hasError = false;
+        
+        if (!validateName(firstNameInput.value) || !validateName(lastNameInput.value)) {
+            e.preventDefault();
+            alert('First name and last name must contain only characters');
+            hasError = true;
+        }
+        
+        if (!validateEmail(emailInput.value)) {
+            e.preventDefault();
+            alert('Please enter a valid email address');
+            hasError = true;
+        }
+    });
+});
+</script>
+{% endblock %} 

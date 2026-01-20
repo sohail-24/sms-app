@@ -1,0 +1,57 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Delete Course - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Delete Course</h5>
+                        </div>
+                        <div class="col text-end">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Course Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Warning!</h5>
+                        <p>Are you sure you want to delete the course "{{ course.title }}"? This action cannot be undone.</p>
+                        <hr>
+                        <p class="mb-0">All associated data including assignments, grades, and attendance records will be permanently deleted.</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Course Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Course Code:</strong> {{ course.course_code }}</li>
+                            <li><strong>Title:</strong> {{ course.title }}</li>
+                            <li><strong>Teacher:</strong> {{ course.teacher.get_full_name }}</li>
+                            <li><strong>Credits:</strong> {{ course.credits }}</li>
+                        </ul>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="text-end">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary me-2">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt me-2"></i>Delete Course
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

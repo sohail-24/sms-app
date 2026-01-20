@@ -1,0 +1,485 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}Announcements{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Announcements</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                    <i class="fas fa-plus me-2"></i>New Announcement
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form class="row g-3" id="announcement-filters" method="get">
+                        <div class="col-md-3">
+                            <label for="filter_category" class="form-label">Category</label>
+                            <select class="form-select" id="filter_category" name="category">
+                                <option value="">All Categories</option>
+                                <option value="academic">Academic</option>
+                                <option value="general">General</option>
+                                <option value="events">Events</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="class" class="form-label">Class</label>
+                            <select class="form-select" id="class" name="class">
+                                <option value="">All Classes</option>
+                                {% if classes %}
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" placeholder="Search announcements...">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Announcements List -->
+            <div class="card">
+                <div class="card-body p-0">
+                    {% for announcement in announcements %}
+                    <div class="announcement-item p-4 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1">{{ announcement.title }}</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Posted on {{ announcement.created_at|date:"F d, Y" }}
+                                    {% if announcement.expiry_date %}
+                                    <span class="ms-3">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Expires on {{ announcement.expiry_date|date:"F d, Y" }}
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editAnnouncementModal"
+                                        data-announcement-id="{{ announcement.id }}"
+                                        data-announcement-title="{{ announcement.title|escapejs }}"
+                                        data-announcement-content="{{ announcement.content|escapejs }}"
+                                        data-announcement-category="{{ announcement.category }}"
+                                        data-announcement-course="{{ announcement.course.id }}"
+                                        data-announcement-expiry="{{ announcement.expiry_date|date:'Y-m-d\TH:i' }}"
+                                        onclick="loadEditAnnouncementData(this)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteAnnouncementModal"
+                                        data-announcement-id="{{ announcement.id }}"
+                                        data-announcement-title="{{ announcement.title|escapejs }}"
+                                        onclick="loadDeleteAnnouncementData(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="announcement-content mb-3">
+                            <p>{{ announcement.content }}</p>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary me-2">
+                                    <i class="fas fa-book me-1"></i>{{ announcement.course.title }}
+                                </span>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-tag me-1"></i>{{ announcement.get_category_display }}
+                                </span>
+                            </div>
+                            <div>
+                                {% if announcement.attachments.all %}
+                                <button type="button" class="btn btn-link btn-sm" data-bs-toggle="collapse" data-bs-target="#attachments-{{ announcement.id }}">
+                                    <i class="fas fa-paperclip me-1"></i>Attachments
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if announcement.attachments.all %}
+                        <div class="collapse mt-3" id="attachments-{{ announcement.id }}">
+                            <div class="list-group">
+                                {% for attachment in announcement.attachments.all %}
+                                <a href="{{ attachment.file.url }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file me-2"></i>
+                                    {{ attachment.filename }}
+                                    <small class="text-muted ms-2">({{ attachment.size }})</small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                        <h4>No Announcements</h4>
+                        <p class="text-muted">You haven't created any announcements yet.</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                            <i class="fas fa-plus me-2"></i>Create Announcement
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if announcements.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if announcements.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ announcements.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in announcements.paginator.page_range %}
+                    <li class="page-item {% if num == announcements.number %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if announcements.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ announcements.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- New Announcement Modal -->
+<div class="modal fade" id="newAnnouncementModal" tabindex="-1" aria-labelledby="newAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newAnnouncementModalLabel">Create New Announcement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'teacher_create_announcement' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modal_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="modal_title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_course" class="form-label">Course</label>
+                        <select class="form-select" id="modal_course" name="course" required>
+                            <option value="">Select Course</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.title }} ({{ course.course_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_category" class="form-label">Category</label>
+                        <select class="form-select" id="modal_category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="academic">Academic</option>
+                            <option value="general">General</option>
+                            <option value="events">Events</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_content" class="form-label">Content</label>
+                        <textarea class="form-control" id="modal_content" name="content" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_expiry_date" class="form-label">Expiry Date (optional)</label>
+                        <input type="datetime-local" class="form-control" id="modal_expiry_date" name="expiry_date">
+                        <div class="form-text">Leave empty if the announcement doesn't expire</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modal_attachment" class="form-label">Attachment (optional)</label>
+                        <input type="file" class="form-control" id="modal_attachment" name="attachment">
+                        <div class="form-text">Maximum file size: 5MB</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Post Announcement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div class="modal fade" id="editAnnouncementModal" tabindex="-1" aria-labelledby="editAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAnnouncementModalLabel">Edit Announcement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="editAnnouncementForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_modal_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit_modal_title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_modal_course" class="form-label">Course</label>
+                        <select class="form-select" id="edit_modal_course" name="course" required>
+                            <option value="">Select Course</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.title }} ({{ course.course_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_modal_category" class="form-label">Category</label>
+                        <select class="form-select" id="edit_modal_category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="academic">Academic</option>
+                            <option value="general">General</option>
+                            <option value="events">Events</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_modal_content" class="form-label">Content</label>
+                        <textarea class="form-control" id="edit_modal_content" name="content" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_modal_expiry_date" class="form-label">Expiry Date (optional)</label>
+                        <input type="datetime-local" class="form-control" id="edit_modal_expiry_date" name="expiry_date">
+                        <div class="form-text">Leave empty if the announcement doesn't expire</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_modal_attachment" class="form-label">Attachment (optional)</label>
+                        <input type="file" class="form-control" id="edit_modal_attachment" name="attachment">
+                        <div class="form-text">Maximum file size: 5MB</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Announcement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Announcement Modal -->
+<div class="modal fade" id="deleteAnnouncementModal" tabindex="-1" aria-labelledby="deleteAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAnnouncementModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                
+                <p class="mb-3">Are you sure you want to delete the following announcement?</p>
+                
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <h6 class="card-title text-danger">Announcement Details</h6>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Title:</strong></div>
+                            <div class="col-sm-8" id="deleteAnnouncementTitle">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form id="deleteAnnouncementForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Announcement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .announcement-item {
+        transition: background-color 0.2s;
+    }
+    .announcement-item:hover {
+        background-color: #f8f9fa;
+    }
+    .announcement-content {
+        white-space: pre-line;
+    }
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const categorySelect = document.getElementById('filter_category');
+        const classSelect = document.getElementById('class');
+        const statusSelect = document.getElementById('status');
+        const searchInput = document.getElementById('search');
+        const filterForm = document.getElementById('announcement-filters');
+
+        function applyFilters() {
+            // Submit the filter form (GET request)
+            filterForm.submit();
+        }
+
+        // Add event listeners
+        [categorySelect, classSelect, statusSelect].forEach(select => {
+            select.addEventListener('change', applyFilters);
+        });
+        searchInput.addEventListener('input', function() {
+            // Debounce search
+            clearTimeout(window.announcementSearchTimeout);
+            window.announcementSearchTimeout = setTimeout(applyFilters, 400);
+        });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Form validation and file handling for modal form
+        const announcementForm = document.querySelector('#newAnnouncementModal form');
+        const attachmentInput = document.getElementById('modal_attachment');
+        const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+
+        attachmentInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > maxFileSize) {
+                    alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                    e.target.value = '';
+                }
+            }
+        });
+
+        announcementForm.addEventListener('submit', function(e) {
+            const title = document.getElementById('modal_title').value.trim();
+            const content = document.getElementById('modal_content').value.trim();
+            const category = document.getElementById('modal_category').value;
+
+            if (!title || !content || !category) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const expiryDate = document.getElementById('modal_expiry_date').value;
+            if (expiryDate) {
+                const selectedDate = new Date(expiryDate);
+                const now = new Date();
+                if (selectedDate <= now) {
+                    e.preventDefault();
+                    alert('Expiry date must be in the future.');
+                    return;
+                }
+            }
+        });
+
+        // Reset form when modal is closed
+        const announcementModal = document.getElementById('newAnnouncementModal');
+        announcementModal.addEventListener('hidden.bs.modal', function() {
+            announcementForm.reset();
+        });
+    });
+
+    // Function to load data into edit modal
+    function loadEditAnnouncementData(button) {
+        const announcementId = button.getAttribute('data-announcement-id');
+        const title = button.getAttribute('data-announcement-title');
+        const content = button.getAttribute('data-announcement-content');
+        const category = button.getAttribute('data-announcement-category');
+        const course = button.getAttribute('data-announcement-course');
+        const expiry = button.getAttribute('data-announcement-expiry');
+        
+        // Populate the edit modal with current announcement data
+        document.getElementById('edit_modal_title').value = title;
+        document.getElementById('edit_modal_content').value = content;
+        document.getElementById('edit_modal_category').value = category;
+        document.getElementById('edit_modal_course').value = course;
+        document.getElementById('edit_modal_expiry_date').value = expiry;
+        
+        // Set the form action URL for editing
+        const form = document.getElementById('editAnnouncementForm');
+        form.action = `{% url 'teacher_edit_announcement' 0 %}`.replace('0', announcementId);
+    }
+
+    // Function to load data into delete modal
+    function loadDeleteAnnouncementData(button) {
+        const announcementId = button.getAttribute('data-announcement-id');
+        const title = button.getAttribute('data-announcement-title');
+        
+        // Populate the delete modal with announcement information
+        document.getElementById('deleteAnnouncementTitle').textContent = title;
+        
+        // Set the form action URL for deletion
+        const form = document.getElementById('deleteAnnouncementForm');
+        form.action = `{% url 'teacher_delete_announcement' 0 %}`.replace('0', announcementId);
+    }
+</script>
+{% endblock %} 

@@ -1,0 +1,340 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Students - School Management System{% endblock %}
+
+{% block content %}
+<style>
+    /* Reset modal styles */
+    .modal-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+    }
+
+    .modal {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .modal-dialog {
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        position: relative !important;
+        width: calc(100% - 2rem) !important;
+        pointer-events: auto !important;
+    }
+
+    .modal-content {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        background-color: #fff !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        border-radius: 0.3rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: #000 !important;
+    }
+
+    .modal-open {
+        overflow: hidden !important;
+        padding-right: 0 !important;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #dee2e6 !important;
+        padding: 1rem !important;
+    }
+
+    .modal-body {
+        padding: 1rem !important;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6 !important;
+        padding: 1rem !important;
+    }
+
+    /* Prevent page shift */
+    html.modal-open {
+        overflow: hidden !important;
+        margin-right: 0 !important;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Students List</h5>
+                </div>
+                <div class="col text-end">
+                    <a href="{% url 'add_student' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Add New Student
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Search and Filters -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search students...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="gradeFilter">
+                        <option value="">All Grades</option>
+                        {% for grade in grades %}
+                        <option value="{{ grade }}">{{ grade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        {% for status in statuses %}
+                        <option value="{{ status.0 }}">{{ status.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Students Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Grade</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.student_id }}</td>
+                            <td>
+                                {% if student.photo %}
+                                <img src="{{ student.photo.url }}" alt="Student photo" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ student.first_name }} {{ student.last_name }}</div>
+                                <small class="text-muted">{{ student.email }}</small>
+                            </td>
+                            <td>{{ student.grade_level }}</td>
+                            <td>
+                                <div>{{ student.phone_number }}</div>
+                                <small class="text-muted">{{ student.guardian_name }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if student.status == 'active' %}bg-success{% elif student.status == 'inactive' %}bg-danger{% elif student.status == 'graduated' %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ student.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'edit_student' student.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ student.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-user-graduate fa-3x mb-3"></i>
+                                    <p>No students found</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if students.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if students.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ students.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for i in students.paginator.page_range %}
+                    <li class="page-item {% if students.number == i %}active{% endif %}">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if students.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ students.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Move all modals outside the table to prevent positioning issues -->
+{% for student in students %}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal{{ student.id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteModalLabel{{ student.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ student.id }}">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                </div>
+                <p class="text-center mb-0">Are you sure you want to delete student {{ student.first_name }} {{ student.last_name }}?</p>
+                <p class="text-center text-muted small mb-0 mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'delete_student' student.id %}" method="POST" style="margin: 0; padding: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        var input = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.includes(input) ? '' : 'none';
+        });
+    });
+
+    // Grade filter
+    document.getElementById('gradeFilter').addEventListener('change', function() {
+        var grade = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            if (!grade) {
+                row.style.display = '';
+                return;
+            }
+            var gradeCell = row.querySelector('td:nth-child(4)');
+            if (gradeCell) {
+                row.style.display = gradeCell.textContent.toLowerCase() === grade ? '' : 'none';
+            }
+        });
+    });
+
+    // Status filter
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        var status = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            if (!status) {
+                row.style.display = '';
+                return;
+            }
+            var statusBadge = row.querySelector('.badge');
+            if (statusBadge) {
+                row.style.display = statusBadge.textContent.toLowerCase().includes(status) ? '' : 'none';
+            }
+        });
+    });
+
+    // Enhanced modal handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const modals = document.querySelectorAll('.modal');
+        
+        modals.forEach(modal => {
+            // Prevent any default behaviors
+            modal.addEventListener('show.bs.modal', function(e) {
+                document.documentElement.classList.add('modal-open');
+                e.stopPropagation();
+            });
+
+            modal.addEventListener('shown.bs.modal', function(e) {
+                document.documentElement.classList.add('modal-open');
+            });
+
+            modal.addEventListener('hide.bs.modal', function(e) {
+                document.documentElement.classList.remove('modal-open');
+            });
+
+            // Prevent closing on backdrop click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    e.stopPropagation();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

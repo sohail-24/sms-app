@@ -1,0 +1,61 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Edit Exam: {{ exam.title }}</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <form method="post">
+                {% csrf_token %}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">Title</label>
+                            <input type="text" name="title" id="id_title" class="form-control" value="{{ exam.title }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_exam_type" class="form-label">Exam Type</label>
+                            <select name="exam_type" id="id_exam_type" class="form-select" required>
+                                {% for value, label in exam_type_choices %}
+                                    <option value="{{ value }}" {% if exam.exam_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_date" class="form-label">Date & Time</label>
+                            <input type="datetime-local" name="date" id="id_date" class="form-control" value="{{ exam.date|date:'Y-m-d\TH:i' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_total_marks" class="form-label">Total Marks</label>
+                            <input type="number" name="total_marks" id="id_total_marks" class="form-control" value="{{ exam.total_marks }}" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            <textarea name="description" id="id_description" class="form-control" rows="3">{{ exam.description }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_course" class="form-label">Course</label>
+                            <select name="course" id="id_course" class="form-select" required>
+                                {% for course in courses %}
+                                    <option value="{{ course.id }}" {% if exam.course.id == course.id %}selected{% endif %}>{{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'teacher_exam_detail' exam.id %}" class="btn btn-secondary ms-2">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

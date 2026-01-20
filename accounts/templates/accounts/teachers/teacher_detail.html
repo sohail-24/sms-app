@@ -1,0 +1,872 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ teacher.get_full_name }} - Teacher Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if teacher.photo %}
+                        <img src="{{ teacher.photo.url }}" alt="{{ teacher.get_full_name }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'img/default-avatar.png' %}" alt="Default Avatar" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h4 class="mb-1">{{ teacher.get_full_name }}</h4>
+                    <p class="text-muted mb-3">Teacher ID: {{ teacher.teacher_id }}</p>
+                    <div class="d-flex justify-content-center mb-3">
+                        <a href="{% url 'teachers' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Back
+                        </a>
+                        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTeacherModal">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </button> -->
+                    </div>
+                    <div class="badge bg-{{ teacher.is_active|yesno:'success,danger' }} mb-3">
+                        {{ teacher.is_active|yesno:'Active,Inactive' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">First Name</label>
+                            <p class="mb-0">{{ teacher.first_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Last Name</label>
+                            <p class="mb-0">{{ teacher.last_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Date of Birth</label>
+                            <p class="mb-0">{{ teacher.date_of_birth|default:"Not provided" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Gender</label>
+                            <p class="mb-0">{{ teacher.get_gender_display|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <p class="mb-0">{{ teacher.email }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Phone Number</label>
+                            <p class="mb-0">{{ teacher.phone_number }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted">Address</label>
+                            <p class="mb-0">{{ teacher.address|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Professional Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Department</label>
+                            <p class="mb-0">{{ teacher.department }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Joining Date</label>
+                            <p class="mb-0">{{ teacher.joining_date }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted">Subjects</label>
+                            <p class="mb-0">{{ teacher.subjects }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted">Qualification</label>
+                            <p class="mb-0">{{ teacher.qualification|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if teacher.courses.all %}
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Assigned Courses</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Title</th>
+                                    <th>Credits</th>
+                                    <th>Students</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in teacher.courses.all %}
+                                <tr>
+                                    <td>{{ course.course_code }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.credits }}</td>
+                                    <td>{{ course.get_student_count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal fade" id="editTeacherModal" tabindex="-1" aria-labelledby="editTeacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTeacherModalLabel">Edit Teacher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'teacher_detail' teacher.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Teacher ID Section -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-id-card me-2"></i>Teacher ID
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Teacher ID</label>
+                                <input type="text" name="teacher_id" class="form-control teacher-id-input" value="{{ teacher.teacher_id }}" placeholder="Enter Teacher ID" required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Must be unique. Current: <strong>{{ teacher.teacher_id }}</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Personal Information -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" name="first_name" class="form-control name-input" value="{{ teacher.first_name }}" placeholder="Enter First Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" name="last_name" class="form-control name-input" value="{{ teacher.last_name }}" placeholder="Enter Last Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" name="date_of_birth" class="form-control" value="{% if teacher.date_of_birth %}{{ teacher.date_of_birth|date:'Y-m-d' }}{% endif %}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender</label>
+                                <select name="gender" class="form-select">
+                                    <option value="">Select Gender</option>
+                                    <option value="M" {% if teacher.gender == 'M' %}selected{% endif %}>Male</option>
+                                    <option value="F" {% if teacher.gender == 'F' %}selected{% endif %}>Female</option>
+                                    <option value="O" {% if teacher.gender == 'O' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-envelope me-2"></i>Contact Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ teacher.email }}" placeholder="Enter Email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phone_number" class="form-control" value="{{ teacher.phone_number|default:'' }}" placeholder="Enter Phone Number">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" class="form-control" rows="3" placeholder="Enter Address">{{ teacher.address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-briefcase me-2"></i>Professional Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <input type="text" name="department" class="form-control" value="{{ teacher.department }}" placeholder="Enter Department" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Joining Date</label>
+                                <input type="date" name="joining_date" class="form-control" value="{% if teacher.joining_date %}{{ teacher.joining_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Subjects</label>
+                                <textarea name="subjects" class="form-control" rows="3" placeholder="Enter subjects taught (comma-separated)" required>{{ teacher.subjects }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Qualification</label>
+                                <input type="text" name="qualification" class="form-control" value="{{ teacher.qualification|default:'' }}" placeholder="Enter Qualification">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select name="is_active" class="form-select" required>
+                                    <option value="True" {% if teacher.is_active %}selected{% endif %}>Active</option>
+                                    <option value="False" {% if not teacher.is_active %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Photo -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-camera me-2"></i>Profile Photo
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                {% if teacher.photo %}
+                                <div class="current-photo mb-3">
+                                    <img src="{{ teacher.photo.url }}" alt="{{ teacher.get_full_name }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">
+                                    <small class="text-muted d-block mt-2">Current profile photo</small>
+                                </div>
+                                {% endif %}
+                                <label class="form-label">Profile Photo</label>
+                                <div class="input-group">
+                                    <input type="file" name="photo" class="form-control modal-photo-input" accept="image/*">
+                                    <button type="button" class="btn btn-outline-secondary modal-clear-photo-btn" style="display: none;">
+                                        <i class="fas fa-times"></i> Clear
+                                    </button>
+                                </div>
+                                <small class="text-muted">
+                                    Maximum file size: 5MB. Supported formats: JPG, PNG, GIF. 
+                                    <strong>You can crop the image after selecting.</strong>
+                                    Leave empty to keep current photo.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Image Cropper -->
+<div class="modal fade" id="modalImageCropperModal" tabindex="-1" aria-labelledby="modalImageCropperModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalImageCropperModalLabel">Crop Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="modalCropperImage" src="" alt="Image to crop">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="modalCropButton">Crop & Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    /* Section Headers */
+    h6.text-primary {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem !important;
+        font-weight: 600;
+    }
+    
+    h6.text-primary i {
+        color: #007bff;
+    }
+    
+    /* Teacher ID specific styling */
+    .teacher-id-input {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .teacher-id-input:focus {
+        background-color: #f8f9ff;
+    }
+    
+    /* Image Cropper Styles */
+    .img-container {
+        max-height: 400px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    #modalCropperImage {
+        max-width: 100%;
+        display: block;
+    }
+
+    .cropper-view-box,
+    .cropper-face {
+        border-radius: 50%;
+    }
+
+    .cropper-modal {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .cropper-view-box {
+        box-shadow: 0 0 0 1px #39f;
+        outline: 0;
+    }
+
+    .cropper-point {
+        background-color: #39f;
+        width: 10px;
+        height: 10px;
+        opacity: 0.75;
+    }
+
+    .cropper-line {
+        background-color: #39f;
+        opacity: 0.5;
+    }
+
+    #modalCropButton {
+        position: relative;
+    }
+
+    #modalCropButton.loading {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    #modalCropButton.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s linear infinite;
+    }
+
+    @keyframes button-loading-spinner {
+        from {
+            transform: rotate(0turn);
+        }
+        to {
+            transform: rotate(1turn);
+        }
+    }
+    
+    .current-photo img {
+        border: 3px solid #dee2e6;
+    }
+    
+    .modal-body .mb-4 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+    
+    .modal-body .mb-4:last-child {
+        border-bottom: none;
+    }
+    
+    /* Form field highlighting */
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    /* Current value indicators */
+    .current-value-indicator {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+    
+    /* Make required fields more obvious */
+    .form-label[for] {
+        position: relative;
+    }
+    
+    input[required] + .current-value-indicator::after,
+    select[required] + .current-value-indicator::after,
+    textarea[required] + .current-value-indicator::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* Better spacing for modal sections */
+    .modal-body .mb-4 {
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .modal-body .mb-4 h6 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        background-color: white;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        margin-top: -1rem;
+        padding: 0.75rem 1rem;
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Cropper.js JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+{{ teacher.photo.url|default:""|escapejs|safe|json_script:"teacher-photo-url" }}
+<script>
+// Store teacher photo URL for JavaScript use
+const teacherPhotoUrlElement = document.getElementById('teacher-photo-url');
+window.teacherPhotoUrl = teacherPhotoUrlElement ? JSON.parse(teacherPhotoUrlElement.textContent) : null;
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing teacher detail functionality...');
+    
+    // Check if Cropper is available
+    if (typeof Cropper === 'undefined') {
+        console.error('Cropper.js library not loaded!');
+        return;
+    }
+    
+    // Modal Image Cropper Functionality
+    let modalCropper = null;
+    let originalModalFile = null;
+    let croppedModalFile = null;
+    
+    // Ensure form displays current values when modal opens
+    const editTeacherModal = document.getElementById('editTeacherModal');
+    if (editTeacherModal) {
+        editTeacherModal.addEventListener('show.bs.modal', function() {
+            // Reset form to display current teacher data
+            const form = this.querySelector('form');
+            if (form) {
+                // Clear any previous validation states
+                const inputs = form.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    input.style.borderColor = '';
+                    const popup = input.parentElement.querySelector('.validation-popup');
+                    if (popup) popup.remove();
+                });
+                
+                // Reset photo input
+                const photoInput = form.querySelector('.modal-photo-input');
+                const clearBtn = form.querySelector('.modal-clear-photo-btn');
+                if (photoInput) photoInput.value = '';
+                if (clearBtn) clearBtn.style.display = 'none';
+            }
+        });
+    }
+    
+    // Get all modal elements with null checks
+    const modalPhotoInput = document.querySelector('.modal-photo-input');
+    const modalClearPhotoBtn = document.querySelector('.modal-clear-photo-btn');
+    const modalCropperModal = document.getElementById('modalImageCropperModal');
+    const modalCropperImage = document.getElementById('modalCropperImage');
+    const modalCropButton = document.getElementById('modalCropButton');
+    
+    console.log('Modal elements found:', {
+        modalPhotoInput: !!modalPhotoInput,
+        modalClearPhotoBtn: !!modalClearPhotoBtn,
+        modalCropperModal: !!modalCropperModal,
+        modalCropperImage: !!modalCropperImage,
+        modalCropButton: !!modalCropButton
+    });
+    
+    // Teacher ID validation
+    const teacherIdInput = document.querySelector('.teacher-id-input');
+    const nameInputs = document.querySelectorAll('.name-input');
+    
+    // Validation functions
+    function validateTeacherId(id) {
+        return /^[a-zA-Z0-9_-]+$/.test(id) && id.length >= 3;
+    }
+    
+    function validateName(name) {
+        return /^[a-zA-Z\s]*$/.test(name);
+    }
+    
+    function showValidationPopup(input, message, isError = true) {
+        const existingPopup = input.parentElement.querySelector('.validation-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        const popup = document.createElement('div');
+        popup.className = 'validation-popup';
+        popup.style.cssText = `
+            position: absolute;
+            background-color: ${isError ? '#ff4444' : '#28a745'};
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+            z-index: 1000;
+            max-width: 300px;
+        `;
+        popup.textContent = message;
+        input.parentElement.style.position = 'relative';
+        input.parentElement.appendChild(popup);
+    }
+    
+    // Teacher ID validation
+    if (teacherIdInput) {
+        teacherIdInput.addEventListener('input', function() {
+            if (this.value.length > 0 && !validateTeacherId(this.value)) {
+                showValidationPopup(this, 'Teacher ID should be at least 3 characters and contain only letters, numbers, underscores, or hyphens');
+                this.style.borderColor = '#ff4444';
+            } else if (this.value.length > 0) {
+                const popup = this.parentElement.querySelector('.validation-popup');
+                if (popup) popup.remove();
+                this.style.borderColor = '#28a745';
+            } else {
+                const popup = this.parentElement.querySelector('.validation-popup');
+                if (popup) popup.remove();
+                this.style.borderColor = '';
+            }
+        });
+    }
+    
+    // Name validation
+    nameInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (!validateName(this.value)) {
+                showValidationPopup(this, 'Name should contain only characters');
+                this.style.borderColor = '#ff4444';
+            } else {
+                const popup = this.parentElement.querySelector('.validation-popup');
+                if (popup) popup.remove();
+                this.style.borderColor = '';
+            }
+        });
+    });
+    
+    function initializeModalCropper(imageFile) {
+        if (!modalCropperModal || !modalCropperImage) {
+            console.error('Modal cropper elements not found!');
+            alert('Image cropping is not available. Please refresh the page and try again.');
+            return;
+        }
+        
+        console.log('Initializing modal cropper with file:', imageFile.name);
+        originalModalFile = imageFile;
+        
+        const imageUrl = URL.createObjectURL(imageFile);
+        modalCropperImage.src = imageUrl;
+        
+        const modal = new bootstrap.Modal(modalCropperModal);
+        modal.show();
+    }
+    
+    // Initialize cropper when modal is shown
+    if (modalCropperModal && modalCropperImage) {
+        modalCropperModal.addEventListener('shown.bs.modal', function () {
+            console.log('Cropper modal shown, initializing Cropper...');
+            if (modalCropper) {
+                modalCropper.destroy();
+            }
+            
+            modalCropper = new Cropper(modalCropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+                ready: function() {
+                    console.log('Cropper ready!');
+                    const containerData = modalCropper.getContainerData();
+                    const size = Math.min(containerData.width, containerData.height) * 0.8;
+                    modalCropper.setCropBoxData({
+                        width: size,
+                        height: size,
+                        left: (containerData.width - size) / 2,
+                        top: (containerData.height - size) / 2
+                    });
+                }
+            });
+        });
+    }
+    
+    // Clean up when modal is hidden
+    if (modalCropperModal) {
+        modalCropperModal.addEventListener('hidden.bs.modal', function () {
+            console.log('Cropper modal hidden, cleaning up...');
+            if (modalCropper) {
+                modalCropper.destroy();
+                modalCropper = null;
+            }
+            if (modalCropperImage && modalCropperImage.src.startsWith('blob:')) {
+                URL.revokeObjectURL(modalCropperImage.src);
+            }
+        });
+    }
+    
+    // Handle crop button click
+    if (modalCropButton) {
+        modalCropButton.addEventListener('click', async function() {
+            console.log('Crop button clicked');
+            if (!modalCropper) {
+                console.error('No cropper instance available');
+                alert('Cropper is not ready. Please try again.');
+                return;
+            }
+
+        try {
+            modalCropButton.classList.add('loading');
+            modalCropButton.disabled = true;
+
+            const canvas = modalCropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, originalModalFile.type, 0.95));
+            
+            if (!blob) {
+                throw new Error('Failed to create blob from canvas');
+            }
+
+            croppedModalFile = new File([blob], originalModalFile.name, {
+                type: originalModalFile.type,
+                lastModified: new Date().getTime()
+            });
+            
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(croppedModalFile);
+            modalPhotoInput.files = dataTransfer.files;
+
+            modalClearPhotoBtn.style.display = 'inline-block';
+            
+            // Update preview
+            const currentPhotoDiv = document.querySelector('.current-photo');
+            if (currentPhotoDiv) {
+                const currentImg = currentPhotoDiv.querySelector('img');
+                if (currentImg) {
+                    currentImg.src = URL.createObjectURL(croppedModalFile);
+                    currentImg.style.border = '3px solid #28a745';
+                }
+                const currentText = currentPhotoDiv.querySelector('small');
+                if (currentText) {
+                    currentText.textContent = 'New cropped photo (will be saved when form is submitted)';
+                    currentText.className = 'text-success d-block mt-2';
+                }
+            }
+
+            const modalInstance = bootstrap.Modal.getInstance(modalCropperModal);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+            
+            console.log('Image cropped successfully!');
+            alert('Image cropped successfully!');
+
+        } catch (error) {
+            console.error('Error during crop:', error);
+            alert('Failed to crop the image. Please try again.');
+        } finally {
+            modalCropButton.classList.remove('loading');
+            modalCropButton.disabled = false;
+        }
+        });
+    }
+    
+    // Handle file input change
+    if (modalPhotoInput) {
+        modalPhotoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image size should not exceed 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                initializeModalCropper(file);
+            }
+        });
+    }
+    
+    if (modalClearPhotoBtn) {
+        modalClearPhotoBtn.addEventListener('click', function() {
+            modalPhotoInput.value = '';
+            this.style.display = 'none';
+            
+            const currentPhotoDiv = document.querySelector('.current-photo');
+            if (currentPhotoDiv) {
+                const currentImg = currentPhotoDiv.querySelector('img');
+                if (currentImg && currentImg.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(currentImg.src);
+                    if (window.teacherPhotoUrl) {
+                        currentImg.src = window.teacherPhotoUrl;
+                        currentImg.style.border = '3px solid #dee2e6';
+                    }
+                }
+                const currentText = currentPhotoDiv.querySelector('small');
+                if (currentText) {
+                    currentText.textContent = 'Current profile photo';
+                    currentText.className = 'text-muted d-block mt-2';
+                }
+            }
+            
+            croppedModalFile = null;
+        });
+    }
+
+    // Form validation and submission
+    const editForm = document.querySelector('#editTeacherModal form');
+    const saveButton = document.querySelector('#editTeacherModal button[type="submit"]');
+    
+    console.log('Form elements found:', {
+        editForm: !!editForm,
+        saveButton: !!saveButton
+    });
+    
+    if (editForm && saveButton) {
+        editForm.addEventListener('submit', function(e) {
+            console.log('Form submission started...');
+            console.log('Form action:', editForm.action);
+            console.log('Form method:', editForm.method);
+            let isValid = true;
+            
+            // Add loading state to save button
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            
+            // Teacher ID validation
+            if (teacherIdInput && teacherIdInput.value && !validateTeacherId(teacherIdInput.value)) {
+                isValid = false;
+                alert('Teacher ID must be at least 3 characters and contain only letters, numbers, underscores, or hyphens');
+            }
+            
+            // Name validation
+            nameInputs.forEach(input => {
+                if (!validateName(input.value)) {
+                    isValid = false;
+                    alert('Names must contain only characters');
+                    return;
+                }
+            });
+            
+            // Email validation
+            const emailInput = editForm.querySelector('input[name="email"]');
+            if (emailInput && emailInput.value && !emailInput.value.includes('@')) {
+                isValid = false;
+                alert('Please enter a valid email address');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Reset button state if validation fails
+                saveButton.disabled = false;
+                saveButton.innerHTML = 'Save Changes';
+                return;
+            }
+            
+            console.log('Form validation passed, submitting...');
+            // Form will submit naturally if validation passes
+        });
+        
+        // Handle form submission errors
+        editForm.addEventListener('error', function(e) {
+            console.error('Form submission error:', e);
+            saveButton.disabled = false;
+            saveButton.innerHTML = 'Save Changes';
+        });
+    }
+    
+    // Reset modal form when modal is hidden
+    if (editTeacherModal) {
+        editTeacherModal.addEventListener('hidden.bs.modal', function () {
+            const saveButton = this.querySelector('button[type="submit"]');
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = 'Save Changes';
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

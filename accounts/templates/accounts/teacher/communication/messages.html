@@ -1,0 +1,209 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}Messages{% endblock %}
+
+{% block page_title %}Messages{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Messages</h2>
+                <a href="{% url 'teacher_compose_message' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Message
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Message List -->
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for message in messages %}
+                        <a href="#" class="list-group-item list-group-item-action {% if message.unread %}active{% endif %}" data-message-id="{{ message.id }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ message.sender.get_full_name }}</h6>
+                                <small>{{ message.created_at|date:"M d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.subject }}</p>
+                            <small class="text-muted">{{ message.content|truncatewords:10 }}</small>
+                            {% if message.unread %}
+                            <span class="badge bg-danger rounded-pill position-absolute top-0 end-0 m-2">
+                                New
+                            </span>
+                            {% endif %}
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-envelope fa-3x text-muted mb-3"></i>
+                            <h4>No Messages</h4>
+                            <p class="text-muted">You have no messages yet.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Message Details -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Message Details</h5>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-primary">
+                                <i class="fas fa-reply"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="message-header mb-4">
+                        <h4>Subject: {{ selected_message.subject }}</h4>
+                        <div class="d-flex align-items-center">
+                            <img src="{% if selected_message.sender.photo %}{{ selected_message.sender.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                 alt="Sender Photo" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-0">{{ selected_message.sender.get_full_name }}</h6>
+                                <small class="text-muted">{{ selected_message.created_at|date:"F d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message-content mb-4">
+                        <p>{{ selected_message.content }}</p>
+                    </div>
+
+                    {% if selected_message.attachments %}
+                    <div class="message-attachments mb-4">
+                        <h6>Attachments</h6>
+                        <div class="list-group">
+                            {% for attachment in selected_message.attachments %}
+                            <a href="{{ attachment.file.url }}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-paperclip me-2"></i>
+                                {{ attachment.filename }}
+                                <small class="text-muted ms-2">({{ attachment.size }})</small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Reply Form -->
+                    <form method="post" enctype="multipart/form-data" action="{% url 'teacher_send_message' %}" class="mt-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="recipient_type" value="reply">
+                        <input type="hidden" name="recipient_id" value="{{ selected_message.sender.id }}">
+                        <input type="hidden" name="subject" value="Re: {{ selected_message.subject }}">
+                        
+                        <div class="mb-3">
+                            <textarea class="form-control" id="content" name="content" rows="4" placeholder="Type your reply..." required></textarea>
+                        </div>
+                        
+                        <div class="mb-3" id="attachment-container" style="display: none;">
+                            <label for="attachment" class="form-label">Attachment</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <div class="form-text">Maximum file size: 5MB</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary" onclick="toggleAttachment()">
+                                    <i class="fas fa-paperclip"></i> Attach File
+                                </button>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Send Reply
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-group-item {
+        border-left: 4px solid var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .list-group-item.active {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .message-header {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1rem;
+    }
+    .message-content {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+function toggleAttachment() {
+    const attachmentContainer = document.getElementById('attachment-container');
+    if (attachmentContainer.style.display === 'none') {
+        attachmentContainer.style.display = 'block';
+    } else {
+        attachmentContainer.style.display = 'none';
+        // Clear the file input when hiding
+        document.getElementById('attachment').value = '';
+    }
+}
+
+function loadMessageDetails(messageId) {
+    // Update URL with message ID
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('message_id', messageId);
+    window.history.pushState({}, '', newUrl);
+    
+    // Reload the page to show message details
+    window.location.reload();
+}
+
+// Add click event listeners to message list items
+document.addEventListener('DOMContentLoaded', function() {
+    const messageItems = document.querySelectorAll('.list-group-item');
+    messageItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Remove active class from all items
+            messageItems.forEach(i => i.classList.remove('active'));
+            // Add active class to clicked item
+            this.classList.add('active');
+            // Get message ID from data attribute
+            const messageId = this.getAttribute('data-message-id');
+            // Load message details
+            loadMessageDetails(messageId);
+        });
+    });
+});
+</script>
+{% endblock %} 

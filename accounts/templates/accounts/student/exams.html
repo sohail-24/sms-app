@@ -1,0 +1,275 @@
+{% extends 'accounts/base_student.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>My Examinations</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#examCalendarModal">
+                        <i class="fas fa-calendar-alt me-2"></i>Calendar View
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Upcoming Exams</h6>
+                    <h2 class="mb-0">{{ total_upcoming }}</h2>
+                    {% if exams %}
+                        {% for exam in exams %}
+                            {% if exam.date >= today and forloop.first %}
+                                <small>
+                                    Time: {% if exam.start_time %}{{ exam.start_time|time:"g:i A" }}{% else %}-{% endif %} |
+                                    Venue: {{ exam.venue }}
+                                </small>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Completed Exams</h6>
+                    <h2 class="mb-0">{{ total_completed }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Next Exam</h6>
+                    {% if exams %}
+                        {% for exam in exams %}
+                            {% if exam.date >= today and forloop.first %}
+                                <p class="mb-0">{{ exam.course.title }}</p>
+                                <small>{{ exam.date|date:"M d, Y" }}</small><br>
+                                <small>
+                                    Time: {% if exam.start_time %}{{ exam.start_time|time:"g:i A" }}{% else %}-{% endif %} |
+                                    Venue: {{ exam.venue }}
+                                </small>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="mb-0">No upcoming exams</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Exams -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Examinations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Exam Type</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Venue</th>
+                                    <th>Duration</th>
+                                    <th>Total Marks</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exam in exams %}
+                                {% if exam.date >= today %}
+                                <tr>
+                                    <td>{{ exam.course.title }}</td>
+                                    <td>{{ exam.exam_type }}</td>
+                                    <td>{{ exam.date|date:"M d, Y" }}</td>
+                                    <td>{% if exam.start_time %}{{ exam.start_time|time:"g:i A" }}{% else %}-{% endif %}</td>
+                                    <td>{{ exam.venue }}</td>
+                                    <td>{{ exam.duration }} mins</td>
+                                    <td>{{ exam.total_marks }}</td>
+                                    <td>
+                                        {% if exam.date == today %}
+                                        <span class="badge bg-warning">Today</span>
+                                        {% else %}
+                                        <span class="badge bg-info">Upcoming</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#examDetailsModal{{ exam.id }}">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No upcoming examinations scheduled.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Exams -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Past Examinations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Exam Type</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Venue</th>
+                                    <th>Duration</th>
+                                    <th>Total Marks</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exam in exams %}
+                                {% if exam.date < today %}
+                                <tr>
+                                    <td>{{ exam.course.title }}</td>
+                                    <td>{{ exam.exam_type }}</td>
+                                    <td>{{ exam.date|date:"M d, Y" }}</td>
+                                    <td>{% if exam.start_time %}{{ exam.start_time|time:"g:i A" }}{% else %}-{% endif %}</td>
+                                    <td>{{ exam.venue }}</td>
+                                    <td>{{ exam.duration }} mins</td>
+                                    <td>{{ exam.total_marks }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">Completed</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#examDetailsModal{{ exam.id }}">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No past examination records found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exam Details Modal -->
+{% for exam in exams %}
+<div class="modal fade" id="examDetailsModal{{ exam.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Examination Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Course Information</h6>
+                        <p><strong>Course:</strong> {{ exam.course.title }}</p>
+                        <p><strong>Teacher:</strong> {{ exam.course.teacher.get_full_name }}</p>
+                        <p><strong>Exam Type:</strong> {{ exam.exam_type }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Exam Schedule</h6>
+                        <p><strong>Date:</strong> {{ exam.date|date:"F d, Y" }}</p>
+                        <p><strong>Time:</strong> {% if exam.start_time %}{{ exam.start_time|time:"g:i A" }}{% else %}-{% endif %}</p>
+                        <p><strong>Venue:</strong> {{ exam.venue }}</p>
+                        <p><strong>Duration:</strong> {{ exam.duration }} minutes</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Instructions</h6>
+                        <p>{{ exam.instructions|linebreaks|default:"No specific instructions provided." }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Calendar Modal -->
+<div class="modal fade" id="examCalendarModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Examination Calendar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="examCalendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge {
+    font-size: 0.875rem;
+}
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.table > :not(:first-child) {
+    border-top: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %} 

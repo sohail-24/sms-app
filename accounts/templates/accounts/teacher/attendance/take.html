@@ -1,0 +1,156 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title_content %}Take Attendance - Teacher Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Take Attendance</h2>
+                <div class="btn-group">
+                    <a href="{% url 'teacher_attendance_history' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-history me-2"></i>View History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Class Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Class Information</h5>
+                            <p><strong>Course:</strong> {{ course.title }} ({{ course.course_code }})</p>
+                            <p><strong>Class:</strong> 
+                                {% if course.class_section %}
+                                    {{ course.class_section.name }} - Section {{ course.class_section.section }}
+                                {% else %}
+                                    Not Assigned
+                                {% endif %}
+                            </p>
+                            <p><strong>Date:</strong> {{ today|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Attendance Summary</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">Total Students</h6>
+                                            <h3 class="mb-0">{{ students.count }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">Present Today</h6>
+                                            <h3 class="mb-0" id="presentCount">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                    <tr>
+                                        <td>{{ student.student_id }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{% if student.photo %}{{ student.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                                     alt="Student Photo" 
+                                                     class="rounded-circle me-2"
+                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                                {{ student.get_full_name }}
+                                            </div>
+                                            <input type="hidden" name="student_ids" value="{{ student.id }}">
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check attendance-radio" name="status_{{ student.id }}" 
+                                                       id="present_{{ student.id }}" value="present" 
+                                                       {% if attendance_records|get_item:student.id == 'present' %}checked{% endif %}
+                                                       required>
+                                                <label class="btn btn-outline-success" for="present_{{ student.id }}">Present</label>
+
+                                                <input type="radio" class="btn-check attendance-radio" name="status_{{ student.id }}" 
+                                                       id="absent_{{ student.id }}" value="absent"
+                                                       {% if attendance_records|get_item:student.id == 'absent' %}checked{% endif %}>
+                                                <label class="btn btn-outline-danger" for="absent_{{ student.id }}">Absent</label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   name="remarks_{{ student.id }}" placeholder="Add remarks">
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">
+                                            <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                                            <h4>No Students Found</h4>
+                                            <p class="text-muted">There are no students enrolled in this course.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <a href="{% url 'teacher_attendance_select' %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Attendance
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to update present count
+    function updatePresentCount() {
+        const presentCount = document.querySelectorAll('input[value="present"]:checked').length;
+        document.getElementById('presentCount').textContent = presentCount;
+    }
+
+    // Add event listeners to all attendance radio buttons
+    document.querySelectorAll('.attendance-radio').forEach(radio => {
+        radio.addEventListener('change', updatePresentCount);
+    });
+
+    // Initial count update
+    updatePresentCount();
+});
+</script>
+{% endblock %} 

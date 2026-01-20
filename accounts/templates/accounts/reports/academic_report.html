@@ -1,0 +1,174 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Class:</strong> {{ class_name }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Class Overview -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Class Overview</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Class:</strong> {{ class_name }}</li>
+                    <li><strong>Section:</strong> {{ section }}</li>
+                    <li><strong>Total Students:</strong> {{ total_students }}</li>
+                    <li><strong>Class Teacher:</strong> {{ class_teacher.full_name }}</li>
+                    <li><strong>Subjects:</strong> {{ subjects|join:", " }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Performance Summary</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Average Score</h6>
+                                <h3>{{ performance_summary.avg_score }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Pass Rate</h6>
+                                <h3>{{ performance_summary.pass_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Top Score</h6>
+                                <h3>{{ performance_summary.top_score }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Lowest Score</h6>
+                                <h3>{{ performance_summary.lowest_score }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject-wise Performance -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Subject-wise Performance</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Average Score</th>
+                        <th>Pass Rate</th>
+                        <th>Top Score</th>
+                        <th>Lowest Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subject_performance %}
+                    <tr>
+                        <td>{{ subject.name }}</td>
+                        <td>{{ subject.teacher.full_name }}</td>
+                        <td>{{ subject.avg_score }}%</td>
+                        <td>{{ subject.pass_rate }}%</td>
+                        <td>{{ subject.top_score }}%</td>
+                        <td>{{ subject.lowest_score }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No subject performance data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Student Rankings -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Student Rankings</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student</th>
+                        <th>Roll Number</th>
+                        <th>Total Score</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in student_rankings %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.roll_number }}</td>
+                        <td>{{ student.total_score }}</td>
+                        <td>{{ student.percentage }}%</td>
+                        <td>{{ student.grade }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No student rankings found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Distribution -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Grade Distribution</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Grade</th>
+                        <th>Number of Students</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grade_distribution %}
+                    <tr>
+                        <td>{{ grade.grade }}</td>
+                        <td>{{ grade.count }}</td>
+                        <td>{{ grade.percentage }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No grade distribution data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

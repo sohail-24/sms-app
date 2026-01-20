@@ -1,0 +1,75 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Delete Exam</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'examinations' %}">Examinations</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'exam_detail' exam.id %}">{{ exam.title|default:exam.exam_type|title }}</a></li>
+                <li class="breadcrumb-item active">Delete</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">Warning!</h6>
+                        <p class="mb-0">You are about to delete the following examination. This action cannot be undone.</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Exam Information:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Title:</strong> {{ exam.title|default:"Not specified" }}</li>
+                                <li><strong>Type:</strong> {{ exam.exam_type|title }}</li>
+                                <li><strong>Course:</strong> {{ exam.course.title }}</li>
+                                <li><strong>Date:</strong> {{ exam.date|date:"F d, Y" }}</li>
+                                <li><strong>Time:</strong> {{ exam.date|time:"g:i A" }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Impact:</h6>
+                            <ul class="list-unstyled text-danger">
+                                <li><i class="fas fa-times"></i> All exam schedules will be deleted</li>
+                                <li><i class="fas fa-times"></i> All student results will be lost</li>
+                                <li><i class="fas fa-times"></i> Related calendar events will be removed</li>
+                                <li><i class="fas fa-times"></i> This action is permanent</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash"></i> Delete Exam Permanently
+                            </button>
+                        </form>
+                        <a href="{% url 'exam_detail' exam.id %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

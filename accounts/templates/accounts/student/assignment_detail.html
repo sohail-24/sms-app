@@ -1,0 +1,38 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>{{ assignment.title }}</h3>
+            <span class="text-muted">Course: {{ assignment.course.title }}</span>
+        </div>
+        <div class="card-body">
+            <p><strong>Description:</strong> {{ assignment.description }}</p>
+            <p><strong>Due Date:</strong> {{ assignment.due_date|date:"M d, Y H:i" }}</p>
+            <hr>
+            {% if submission %}
+                <h5>Your Submission</h5>
+                <p><strong>File:</strong> <a href="{{ submission.file.url }}" target="_blank">Download</a></p>
+                <p><strong>Comments:</strong> {{ submission.comments|default:"-" }}</p>
+                <p><strong>Submitted At:</strong> {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+            {% else %}
+                <h5>Submit Assignment</h5>
+                <form method="post" action="{% url 'student_submit_assignment' assignment.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Assignment File</label>
+                        <input type="file" class="form-control" name="assignment_file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comments (Optional)</label>
+                        <textarea class="form-control" name="comments" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Assignment</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <a href="{% url 'student_assignments' %}" class="btn btn-secondary mt-3">Back to Assignments</a>
+</div>
+{% endblock %} 

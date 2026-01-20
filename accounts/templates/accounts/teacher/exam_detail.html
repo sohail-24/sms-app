@@ -1,0 +1,64 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load custom_filters %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Back to Exams Button -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'teacher_exams' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Exams
+            </a>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Exam Details: {{ exam.title }} ({{ exam.get_exam_type_display }})</h2>
+            <p><strong>Course:</strong> {{ exam.course.title }}</p>
+            <p><strong>Date:</strong> {{ exam.date|date:'M d, Y H:i' }}</p>
+            <p><strong>Total Marks:</strong> {{ exam.total_marks }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <form method="post">
+                {% csrf_token %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Enter/Update Student Marks</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Student ID</th>
+                                        <th>Marks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                    <tr>
+                                        <td>{{ student.get_full_name }}</td>
+                                        <td>{{ student.student_id }}</td>
+                                        <td>
+                                            <input type="number" name="marks_{{ student.id }}" min="0" max="{{ exam.total_marks }}" class="form-control" value="{{ results|get_item:student.id }}">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Marks
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

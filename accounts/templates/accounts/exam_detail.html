@@ -1,0 +1,181 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Exam Details</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'examinations' %}">Examinations</a></li>
+                <li class="breadcrumb-item active">{{ exam.title|default:exam.exam_type|title }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'exam_edit' exam.id %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Exam
+            </a>
+            <a href="{% url 'exam_delete' exam.id %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete Exam
+            </a>
+            <a href="{% url 'examinations' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Examinations
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Exam Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Exam Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Exam Title:</strong> {{ exam.title|default:"Not specified" }}</p>
+                            <p><strong>Exam Type:</strong> {{ exam.exam_type|title }}</p>
+                            <p><strong>Course:</strong> {{ exam.course.title }} ({{ exam.course.course_code }})</p>
+                            <p><strong>Teacher:</strong> {{ exam.course.teacher.get_full_name|default:"Not assigned" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date & Time:</strong> {{ exam.date|date:"F d, Y" }} at {{ exam.date|time:"g:i A" }}</p>
+                            <p><strong>Duration:</strong> {{ exam.duration }}</p>
+                            <p><strong>Total Marks:</strong> {{ exam.total_marks }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if exam.date < now %}
+                                    <span class="badge bg-secondary">Completed</span>
+                                {% elif exam.date <= upcoming_date %}
+                                    <span class="badge bg-warning">Upcoming</span>
+                                {% else %}
+                                    <span class="badge bg-info">Scheduled</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if exam.instructions %}
+                    <div class="mt-3">
+                        <h6>Instructions:</h6>
+                        <p class="text-muted">{{ exam.instructions }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exam Schedule -->
+            {% if exam_schedule %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Schedule Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Room:</strong> {{ exam_schedule.room }}</p>
+                            <p><strong>Supervisor:</strong> {{ exam_schedule.supervisor.get_full_name|default:"Not assigned" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Start Time:</strong> {{ exam_schedule.start_time|time:"g:i A" }}</p>
+                            <p><strong>End Time:</strong> {{ exam_schedule.end_time|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h3 class="text-primary">{{ students.count }}</h3>
+                        <p class="text-muted">Enrolled Students</p>
+                    </div>
+                    <div class="text-center mb-3">
+                        <h3 class="text-success">{{ submitted_results_count }}</h3>
+                        <p class="text-muted">Results Submitted</p>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-info">{{ exam.total_marks }}</h3>
+                        <p class="text-muted">Total Marks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Results -->
+    {% if students %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Student Results</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Class</th>
+                            <th>Marks</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.student_id }}</td>
+                            <td>{{ student.get_full_name }}</td>
+                            <td>{{ student.class_section.full_name|default:"Not assigned" }}</td>
+                            <td>
+                                {% if results|get_item:student.id %}
+                                    {{ results|get_item:student.id }}/{{ exam.total_marks }}
+                                {% else %}
+                                    <span class="text-muted">Not submitted</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if results|get_item:student.id %}
+                                    {% widthratio results|get_item:student.id exam.total_marks 100 %}%
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if results|get_item:student.id %}
+                                    {% if results|get_item:student.id >= exam.total_marks|multiply:0.4 %}
+                                        <span class="badge bg-success">Pass</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Fail</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

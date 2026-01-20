@@ -1,0 +1,90 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<div class="mb-4">
+    <h5 class="text-muted">Teacher: {{ teacher.get_full_name }}</h5>
+    <h5 class="text-muted">Report Type: {{ report_type }}</h5>
+</div>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Teaching Hours Summary -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Teaching Hours Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ teaching_hours.total_hours }}</h3>
+                            <p class="text-muted mb-0">Total Hours per Week</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ teaching_hours.classes_taught }}</h3>
+                            <p class="text-muted mb-0">Classes Taught</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ teaching_hours.avg_hours_per_day }}</h3>
+                            <p class="text-muted mb-0">Average Hours per Day</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Schedule Details -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Course Schedule Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Class</th>
+                                <th>Day</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Duration (Hours)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in teacher.course_set.all %}
+                                {% for schedule in course.schedule_set.all %}
+                                <tr>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.class_section.name }}</td>
+                                    <td>{{ schedule.day|title }}</td>
+                                    <td>{{ schedule.start_time|time:"H:i" }}</td>
+                                    <td>{{ schedule.end_time|time:"H:i" }}</td>
+                                    <td>
+                                        {% with duration=schedule.end_time|timeuntil:schedule.start_time %}
+                                            {{ duration|floatformat:2 }}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No schedule found for this teacher.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

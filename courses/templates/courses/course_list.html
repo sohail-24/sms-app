@@ -1,0 +1,191 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}Courses - School Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Courses</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Courses</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+                <i class="fas fa-plus"></i> Add Course
+            </button>
+        </div>
+    </div>
+
+    <!-- Course List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">All Courses</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search courses...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Credits</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in courses %}
+                        <tr>
+                            <td>{{ course.code }}</td>
+                            <td>{{ course.name }}</td>
+                            <td>{{ course.department.name }}</td>
+                            <td>{{ course.credits }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" title="View" onclick="window.location.href='{% url 'course_detail' course.id %}'">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary" title="Edit" onclick="window.location.href='{% url 'edit_course' course.id %}'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete('{{ course.id }}', '{{ course.code }}', '{{ course.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No courses found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Course Modal -->
+<div class="modal fade" id="createCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'course_list' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_code" class="form-label">Course Code</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.code.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">Course Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.name.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_department" class="form-label">Department</label>
+                        {{ form.department }}
+                        {% if form.department.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.department.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_credits" class="form-label">Credits</label>
+                        {{ form.credits }}
+                        {% if form.credits.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.credits.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Course</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteCourseModal" tabindex="-1" aria-labelledby="deleteCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCourseModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this course?</p>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item"><strong>Course Code:</strong> <span id="deleteCourseCode"></span></li>
+                    <li class="list-group-item"><strong>Course Name:</strong> <span id="deleteCourseName"></span></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteCourseForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the delete modal
+    window.deleteModal = new bootstrap.Modal(document.getElementById('deleteCourseModal'));
+});
+
+function confirmDelete(id, code, name) {
+    // Update modal content
+    document.getElementById('deleteCourseCode').textContent = code;
+    document.getElementById('deleteCourseName').textContent = name;
+    
+    // Update form action using Django's URL template tag
+    document.getElementById('deleteCourseForm').action = "{% url 'delete_course' 0 %}".replace('0', id);
+    
+    // Show modal
+    window.deleteModal.show();
+}
+</script>
+{% endblock %} 

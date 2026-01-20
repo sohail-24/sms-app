@@ -1,0 +1,123 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}Compose Message{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Compose Message</h2>
+                <a href="{% url 'teacher_messages' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Messages
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'teacher_send_message' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="recipient_type" class="form-label">Send To</label>
+                            <select class="form-select" id="recipient_type" name="recipient_type" required onchange="toggleRecipientSelect()">
+                                <option value="">Select Recipient Type</option>
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="class">Entire Class</option>
+                                <option value="course">Course Students</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="recipient_student_div" style="display: none;">
+                            <label for="recipient_student" class="form-label">Select Student</label>
+                            <select class="form-select" id="recipient_student" name="recipient_student">
+                                <option value="">Select Student</option>
+                                {% for student in students %}
+                                <option value="{{ student.user.id }}">{{ student.get_full_name }} ({{ student.student_id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="recipient_teacher_div" style="display: none;">
+                            <label for="recipient_teacher" class="form-label">Select Teacher</label>
+                            <select class="form-select" id="recipient_teacher" name="recipient_teacher">
+                                <option value="">Select Teacher</option>
+                                {% for teacher in teachers %}
+                                <option value="{{ teacher.user.id }}">{{ teacher.get_full_name }} ({{ teacher.department }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="recipient_class_div" style="display: none;">
+                            <label for="recipient_class" class="form-label">Select Class</label>
+                            <select class="form-select" id="recipient_class" name="recipient_class">
+                                <option value="">Select Class</option>
+                                {% for class in classes %}
+                                <option value="{{ class.id }}">{{ class.name }} - Section {{ class.section }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="recipient_course_div" style="display: none;">
+                            <label for="recipient_course" class="form-label">Select Course</label>
+                            <select class="form-select" id="recipient_course" name="recipient_course">
+                                <option value="">Select Course</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.title }} ({{ course.course_code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Message</label>
+                            <textarea class="form-control" id="content" name="content" rows="6" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachment (optional)</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <div class="form-text">Maximum file size: 5MB</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="window.history.back();">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Send Message
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRecipientSelect() {
+    const recipientType = document.getElementById('recipient_type').value;
+    
+    // Hide all recipient divs
+    document.getElementById('recipient_student_div').style.display = 'none';
+    document.getElementById('recipient_teacher_div').style.display = 'none';
+    document.getElementById('recipient_class_div').style.display = 'none';
+    document.getElementById('recipient_course_div').style.display = 'none';
+    
+    // Show the selected recipient div
+    if (recipientType) {
+        document.getElementById(`recipient_${recipientType}_div`).style.display = 'block';
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,311 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Teachers - School Management System{% endblock %}
+
+{% block content %}
+<!-- Add CSS for modal positioning -->
+<style>
+    /* Reset modal styles */
+    .modal-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+    }
+
+    .modal {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .modal-dialog {
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        position: relative !important;
+        width: calc(100% - 2rem) !important;
+        pointer-events: auto !important;
+    }
+
+    .modal-content {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        background-color: #fff !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        border-radius: 0.3rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: #000 !important;
+    }
+
+    .modal-open {
+        overflow: hidden !important;
+        padding-right: 0 !important;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #dee2e6 !important;
+        padding: 1rem !important;
+    }
+
+    .modal-body {
+        padding: 1rem !important;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6 !important;
+        padding: 1rem !important;
+    }
+
+    /* Prevent page shift */
+    html.modal-open {
+        overflow: hidden !important;
+        margin-right: 0 !important;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Teachers List</h5>
+                </div>
+                <div class="col text-end">
+                    <a href="{% url 'add_teacher' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Add New Teacher
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Search and Filters -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search teachers...">
+                    </div>
+                </div>
+                <!-- <div class="col-md-3">
+                    <select class="form-select" id="departmentFilter">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept }}">{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div> -->
+            </div>
+
+            <!-- Teachers Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Contact</th>
+                            <th>Subjects</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                        <tr>
+                            <td>{{ teacher.teacher_id }}</td>
+                            <td>
+                                {% if teacher.photo %}
+                                <img src="{{ teacher.photo.url }}" alt="Teacher photo" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ teacher.first_name }} {{ teacher.last_name }}</div>
+                                <small class="text-muted">{{ teacher.email }}</small>
+                            </td>
+                            <td>{{ teacher.department }}</td>
+                            <td>{{ teacher.phone_number }}</td>
+                            <td>
+                                <small class="text-muted">{{ teacher.subjects }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'edit_teacher' teacher.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ teacher.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
+                                    <p>No teachers found</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if teachers.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if teachers.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ teachers.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for i in teachers.paginator.page_range %}
+                    <li class="page-item {% if teachers.number == i %}active{% endif %}">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if teachers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ teachers.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Move all modals outside the table -->
+{% for teacher in teachers %}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal{{ teacher.id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="deleteModalLabel{{ teacher.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ teacher.id }}">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                </div>
+                <p class="text-center mb-0">Are you sure you want to delete teacher {{ teacher.first_name }} {{ teacher.last_name }}?</p>
+                <p class="text-center text-muted small mb-0 mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'delete_teacher' teacher.id %}" method="POST" style="margin: 0; padding: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        var input = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.includes(input) ? '' : 'none';
+        });
+    });
+
+    // Department filter
+    document.getElementById('departmentFilter').addEventListener('change', function() {
+        var department = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            if (!department) {
+                row.style.display = '';
+                return;
+            }
+            var deptCell = row.querySelector('td:nth-child(4)');
+            if (deptCell) {
+                row.style.display = deptCell.textContent.toLowerCase() === department ? '' : 'none';
+            }
+        });
+    });
+
+    // Enhanced modal handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const modals = document.querySelectorAll('.modal');
+        
+        modals.forEach(modal => {
+            // Prevent any default behaviors
+            modal.addEventListener('show.bs.modal', function(e) {
+                document.documentElement.classList.add('modal-open');
+                e.stopPropagation();
+            });
+
+            modal.addEventListener('shown.bs.modal', function(e) {
+                document.documentElement.classList.add('modal-open');
+            });
+
+            modal.addEventListener('hide.bs.modal', function(e) {
+                document.documentElement.classList.remove('modal-open');
+            });
+
+            // Prevent closing on backdrop click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    e.stopPropagation();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

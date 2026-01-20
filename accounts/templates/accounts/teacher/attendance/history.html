@@ -1,0 +1,177 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Attendance History - Teacher Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Attendance History</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Filters -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <select class="form-select" id="courseFilter">
+                                <option value="">All Courses</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="classFilter">
+                                <option value="">All Classes</option>
+                                {% for class in classes %}
+                                <option value="{{ class.id }}">{{ class.name }} - {{ class.section }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="dateFilter">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-primary w-100" id="applyFilters">
+                                <i class="fas fa-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Attendance History Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Course</th>
+                                    <th>Class</th>
+                                    <th>Total Students</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.date|date:"F d, Y" }}</td>
+                                    <td>{{ record.course.title }}</td>
+                                    <td>{{ record.course.class_section.name }} - {{ record.course.class_section.section }}</td>
+                                    <td>{{ record.total_students }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ record.present_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ record.absent_count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                        <h4>No Attendance Records Found</h4>
+                                        <p class="text-muted">No attendance records are available for the selected filters.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if attendance_records.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if attendance_records.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ attendance_records.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in attendance_records.paginator.page_range %}
+                            <li class="page-item {% if attendance_records.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            {% if attendance_records.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ attendance_records.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const applyFilters = document.getElementById('applyFilters');
+        const courseFilter = document.getElementById('courseFilter');
+        const classFilter = document.getElementById('classFilter');
+        const dateFilter = document.getElementById('dateFilter');
+
+        applyFilters.addEventListener('click', function() {
+            const courseId = courseFilter.value;
+            const classId = classFilter.value;
+            const date = dateFilter.value;
+            
+            // Add your filter logic here
+            console.log('Applying filters:', { courseId, classId, date });
+        });
+    });
+</script>
+{% endblock %} 

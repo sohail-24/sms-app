@@ -1,0 +1,538 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Calendar - School Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .event-type-academic { background-color: #3498db; }
+    .event-type-exam { background-color: #e74c3c; }
+    .event-type-holiday { background-color: #2ecc71; }
+    .event-type-meeting { background-color: #f1c40f; }
+    .sunday-holiday { 
+        background-color: #2ecc71 !important; 
+        border-color: #27ae60 !important;
+        color: #ffffff !important;
+    }
+    .calendar-sidebar {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .event-type-filter {
+        margin-bottom: 15px;
+    }
+    .event-type-filter label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+    .event-type-filter input[type="checkbox"] {
+        margin-right: 10px;
+    }
+    .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Calendar</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Calendar</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <!-- Calendar Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="calendar-sidebar">
+                <button class="btn btn-primary w-100 mb-4" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                    <i class="fas fa-plus"></i> Add Event
+                </button>
+
+                <!-- Event Type Filters -->
+                <div class="event-type-filter">
+                    <h5 class="mb-3">Event Types</h5>
+                    <label>
+                        <input type="checkbox" checked data-event-type="academic">
+                        <span class="color-dot" style="background-color: #3498db;"></span>
+                        Academic Events
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="exam">
+                        <span class="color-dot" style="background-color: #e74c3c;"></span>
+                        Examinations
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="holiday">
+                        <span class="color-dot" style="background-color: #2ecc71;"></span>
+                        Holidays
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="meeting">
+                        <span class="color-dot" style="background-color: #f1c40f;"></span>
+                        Meetings
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="sports">
+                        <span class="color-dot" style="background-color: #9b59b6;"></span>
+                        Sports
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="cultural">
+                        <span class="color-dot" style="background-color: #e67e22;"></span>
+                        Cultural
+                    </label>
+                    <label>
+                        <input type="checkbox" checked data-event-type="general">
+                        <span class="color-dot" style="background-color: #34495e;"></span>
+                        General
+                    </label>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div class="upcoming-events">
+                    <h5 class="mb-3">Upcoming Events</h5>
+                    <div class="list-group">
+                        {% for event in upcoming_events %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <small>{{ event.start_date|date:"M d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ event.description|truncatewords:10 }}</p>
+                            <small class="text-muted">
+                                <span class="color-dot me-1" style="background-color: {{ event.color }};"></span>
+                                {{ event.get_event_type_display }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm" method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Event Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.event_type.id_for_label }}" class="form-label">Event Type</label>
+                            {{ form.event_type }}
+                            {% if form.event_type.errors %}
+                            <div class="text-danger">{{ form.event_type.errors }}</div>
+                            {% endif %}
+                    </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.start_date.id_for_label }}" class="form-label">Start Date & Time</label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <div class="text-danger">{{ form.start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.end_date.id_for_label }}" class="form-label">End Date & Time</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div class="text-danger">{{ form.end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                            <div class="text-danger">{{ form.location.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">Color</label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                            <div class="text-danger">{{ form.color.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_all_day }}
+                            <label class="form-check-label" for="{{ form.is_all_day.id_for_label }}">
+                                All Day Event
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitEventForm()">Add Event</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        events: '{% url "calendar_events_api" %}',
+        editable: true,
+        selectable: true,
+        selectMirror: true,
+        dayMaxEvents: true,
+        select: function(arg) {
+            // Set the selected date in the form
+            document.getElementById('{{ form.start_date.id_for_label }}').value = arg.startStr + 'T09:00';
+            if (arg.endStr) {
+                document.getElementById('{{ form.end_date.id_for_label }}').value = arg.endStr + 'T17:00';
+            }
+            $('#addEventModal').modal('show');
+        },
+        eventClick: function(arg) {
+            // Show event details
+            showEventDetails(arg.event.id);
+        }
+    });
+    calendar.render();
+
+    // Event type filter handling
+    document.querySelectorAll('.event-type-filter input').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function(e) {
+            var eventType = e.target.dataset.eventType;
+            var events = calendar.getEvents();
+            events.forEach(function(event) {
+                if (event.classNames.includes('event-type-' + eventType)) {
+                    if (e.target.checked) {
+                        event.setProp('display', 'auto');
+                    } else {
+                        event.setProp('display', 'none');
+                    }
+                }
+            });
+        });
+    });
+
+    // Color change based on event type
+    const eventTypeSelect = document.getElementById('{{ form.event_type.id_for_label }}');
+    const colorSelect = document.getElementById('{{ form.color.id_for_label }}');
+    
+    if (eventTypeSelect && colorSelect) {
+        // Set initial color based on event type
+        const setColorForEventType = (eventType) => {
+            const colorMapping = {
+                'academic': '#3498db',
+                'exam': '#e74c3c',
+                'holiday': '#2ecc71',
+                'meeting': '#f1c40f',
+                'sports': '#9b59b6',
+                'cultural': '#e67e22',
+                'general': '#34495e'
+            };
+            
+            if (colorMapping[eventType]) {
+                // Find and select the matching color option
+                Array.from(colorSelect.options).forEach(option => {
+                    if (option.value === colorMapping[eventType]) {
+                        option.selected = true;
+                    }
+                });
+            }
+        };
+
+        // Set initial color if event type is pre-selected
+        if (eventTypeSelect.value) {
+            setColorForEventType(eventTypeSelect.value);
+        }
+
+        // Update color when event type changes
+        eventTypeSelect.addEventListener('change', function() {
+            setColorForEventType(this.value);
+        });
+    }
+    
+    // Expose calendar globally for form submission
+    window.calendar = calendar;
+});
+
+function submitEventForm() {
+    const form = document.getElementById('addEventForm');
+    const formData = new FormData(form);
+    
+    fetch('{% url "calendar" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh calendar
+            $('#addEventModal').modal('hide');
+            window.calendar.refetchEvents();
+            
+            // Refresh upcoming events list
+            refreshUpcomingEventsList();
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.page-header').nextSibling);
+            
+            // Clear form
+            form.reset();
+        } else {
+            // Show error messages
+            console.error('Form errors:', data.errors);
+            alert('Error creating event. Please check the form and try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the event.');
+    });
+}
+
+// Global variable to store current event ID
+let currentEventId = null;
+
+function showEventDetails(eventId) {
+    currentEventId = eventId; // Store for delete functionality
+    
+    fetch(`{% url "calendar_events_api" %}${eventId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const modal = document.getElementById('eventDetailModal');
+            const title = modal.querySelector('#eventDetailTitle');
+            const body = modal.querySelector('#eventDetailBody');
+            const deleteBtn = modal.querySelector('#deleteEventBtn');
+            
+            // Special handling for Sunday holidays
+            const isSundayHoliday = String(eventId).startsWith('sunday-');
+            
+            if (isSundayHoliday) {
+                title.textContent = 'Sunday is a holiday';
+                deleteBtn.style.display = 'none'; // Hide delete button for Sunday holidays
+            } else {
+                title.textContent = data.title;
+                deleteBtn.style.display = 'inline-block'; // Show delete button for regular events
+            }
+            
+            const colorIndicator = isSundayHoliday ? 
+                '<span class="badge" style="background-color: #2ecc71; color: white;">Sunday Holiday</span>' : 
+                `<span class="badge" style="background-color: ${data.color}; color: white;">${data.event_type}</span>`;
+            
+            body.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Type:</strong></div>
+                    <div class="col-sm-9">${colorIndicator}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>Date:</strong></div>
+                    <div class="col-sm-9">${data.start_date}</div>
+                </div>
+                ${data.end_date ? `
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>End:</strong></div>
+                    <div class="col-sm-9">${data.end_date}</div>
+                </div>
+                ` : ''}
+                ${data.location ? `
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>Location:</strong></div>
+                    <div class="col-sm-9">${data.location}</div>
+                </div>
+                ` : ''}
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>Description:</strong></div>
+                    <div class="col-sm-9">${data.description || (isSundayHoliday ? 'Weekly Sunday holiday - a day of rest' : 'No description')}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>Created by:</strong></div>
+                    <div class="col-sm-9">${data.created_by}</div>
+                </div>
+                ${!isSundayHoliday ? `
+                <div class="row">
+                    <div class="col-sm-3"><strong>Created:</strong></div>
+                    <div class="col-sm-9">${data.created_at}</div>
+                </div>
+                ` : ''}
+            `;
+            
+            $('#eventDetailModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error fetching event details:', error);
+            alert('Error loading event details.');
+        });
+}
+
+function deleteEvent() {
+    if (!currentEventId) {
+        alert('No event selected for deletion.');
+        return;
+    }
+    
+    // Check if it's a Sunday holiday (shouldn't happen as button is hidden, but double-check)
+    if (String(currentEventId).startsWith('sunday-')) {
+        alert('Sunday holidays cannot be deleted as they are system-generated.');
+        return;
+    }
+    
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        return;
+    }
+    
+    // Send delete request
+    fetch(`{% url "calendar_events_api" %}${currentEventId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Close modal and refresh calendar
+            $('#eventDetailModal').modal('hide');
+            window.calendar.refetchEvents();
+            
+            // Refresh upcoming events list
+            refreshUpcomingEventsList();
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                Event deleted successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.page-header').nextSibling);
+            
+            // Auto-remove alert after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        } else {
+            throw new Error('Failed to delete event');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting event:', error);
+        alert('Error deleting event. Please try again.');
+    });
+}
+
+function refreshUpcomingEventsList() {
+    // Fetch updated upcoming events list
+    fetch('{% url "calendar" %}?upcoming_events_only=true')
+        .then(response => response.text())
+        .then(html => {
+            // Extract the upcoming events section from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newUpcomingEvents = doc.querySelector('.upcoming-events .list-group');
+            
+            if (newUpcomingEvents) {
+                const currentUpcomingEvents = document.querySelector('.upcoming-events .list-group');
+                if (currentUpcomingEvents) {
+                    currentUpcomingEvents.innerHTML = newUpcomingEvents.innerHTML;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing upcoming events:', error);
+        });
+}
+</script>
+
+<!-- Event Detail Modal -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventDetailTitle">Event Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventDetailBody">
+                <!-- Event details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="deleteEventBtn" onclick="deleteEvent()">Delete Event</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

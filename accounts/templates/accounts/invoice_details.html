@@ -1,0 +1,103 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Invoice Details - School Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Invoice Details</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'invoices' %}">Invoices</a></li>
+                <li class="breadcrumb-item active">Invoice Details</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Invoice Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Student Information</h6>
+                            <p><strong>Name:</strong> {{ invoice.student.get_full_name }}</p>
+                            <p><strong>Student ID:</strong> {{ invoice.student.student_id }}</p>
+                            <p><strong>Class:</strong> {{ invoice.student.class_section }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Invoice Information</h6>
+                            <p><strong>Invoice ID:</strong> #{{ invoice.id }}</p>
+                            <p><strong>Issue Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+                            <p><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge {% if invoice.paid %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ invoice.paid|yesno:"Paid,Pending" }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Payment Details</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>School Fees</td>
+                                            <td class="text-end">₹{{ invoice.amount }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total Amount</th>
+                                            <th class="text-end">₹{{ invoice.amount }}</th>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if invoice.payment %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Payment Information</h6>
+                            <p><strong>Transaction ID:</strong> {{ invoice.payment.transaction_id }}</p>
+                            <p><strong>Payment Date:</strong> {{ invoice.payment.payment_date|date:"F d, Y" }}</p>
+                            <p><strong>Payment Method:</strong> {{ invoice.payment.payment_method }}</p>
+                            {% if invoice.payment.remarks %}
+                            <p><strong>Remarks:</strong> {{ invoice.payment.remarks }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'invoices' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+                        </a>
+                        <a href="{% url 'print_invoice' invoice.id %}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-print me-2"></i>Print Invoice
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

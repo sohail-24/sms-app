@@ -1,0 +1,136 @@
+{% extends 'accounts/base_print.html' %}
+{% load static %}
+
+{% block title %}Payment Receipt - School Management System{% endblock %}
+
+{% block content %}
+<div class="receipt-container">
+    <!-- School Header -->
+    <div class="text-center mb-4">
+        <h2 class="school-name">School Management System</h2>
+        <p class="school-address">123 Education Street, City, State - 123456</p>
+        <p class="school-contact">Phone: (123) 456-7890 | Email: info@school.com</p>
+    </div>
+
+    <!-- Receipt Title -->
+    <div class="text-center mb-4">
+        <h3 class="receipt-title">Payment Receipt</h3>
+        <p class="receipt-number">Receipt No: {{ payment.transaction_id }}</p>
+    </div>
+
+    <!-- Receipt Details -->
+    <div class="receipt-details">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5 class="section-title">Student Information</h5>
+                <p><strong>Name:</strong> {{ payment.student.get_full_name }}</p>
+                <p><strong>Student ID:</strong> {{ payment.student.student_id }}</p>
+                <p><strong>Grade:</strong> {{ payment.student.grade_level }}</p>
+            </div>
+            <div class="col-md-6">
+                <h5 class="section-title">Payment Information</h5>
+                <p><strong>Date:</strong> {{ payment.payment_date|date:"F d, Y" }}</p>
+                <p><strong>Payment Method:</strong> {{ payment.payment_method }}</p>
+                <p><strong>Status:</strong> {{ payment.status|title }}</p>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="payment-summary">
+            <h5 class="section-title">Payment Summary</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Fee Payment</td>
+                        <td class="text-end">₹{{ payment.amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount</th>
+                        <th class="text-end">₹{{ payment.amount|floatformat:2 }}</th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="receipt-footer mt-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Authorized Signature</strong></p>
+                    <div class="signature-line"></div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p><strong>School Stamp</strong></p>
+                    <div class="stamp-placeholder"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Instructions -->
+    <div class="print-instructions text-center mt-4">
+        <p class="text-muted">This is a computer-generated receipt and does not require a physical signature.</p>
+    </div>
+</div>
+
+<style>
+    .receipt-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .school-name {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .school-address, .school-contact {
+        margin-bottom: 5px;
+        color: #666;
+    }
+
+    .receipt-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .receipt-number {
+        color: #666;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .signature-line {
+        border-top: 1px solid #000;
+        margin-top: 50px;
+    }
+
+    .stamp-placeholder {
+        border: 2px dashed #ddd;
+        width: 100px;
+        height: 100px;
+        margin-left: auto;
+    }
+
+    @media print {
+        .print-instructions {
+            display: none;
+        }
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,338 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Assignment Submissions - Teacher Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Assignment Submissions</h2>
+                <a href="{% url 'teacher_assignments' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Assignments
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Assignment Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h4>{{ assignment.title }}</h4>
+                            <p class="text-muted">{{ assignment.description }}</p>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-primary me-2">{{ assignment.course.course_code }} - {{ assignment.course.title }}</span>
+                                <span class="badge bg-info me-2">Due: {{ assignment.due_date|date:"F d, Y" }}</span>
+                                <span class="badge bg-{{ assignment.status_color }}">{{ assignment.status }}</span>
+                            </div>
+                            <!-- Assignment Download Section -->
+                            {% if assignment.file %}
+                            <div class="card bg-light border-primary">
+                                <div class="card-body py-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-download fa-lg text-primary me-3"></i>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">Assignment Document</h6>
+                                            <small class="text-muted">Download the assignment file</small>
+                                        </div>
+                                        <a href="{{ assignment.file.url }}" class="btn btn-primary btn-sm" download>
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Submission Summary</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Students:</span>
+                                        <strong>{{ total_students }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Submitted:</span>
+                                        <strong>{{ submitted_count }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Pending:</span>
+                                        <strong>{{ pending_count }}</strong>
+                                    </div>
+                                    <div class="progress mt-2">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ submission_percentage }}%">
+                                            {{ submission_percentage }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submissions Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Submission Date</th>
+                                    <th>Status</th>
+                                    <th>Grade</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in submissions %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.submission %}
+                                                <img src="{% if item.submission.student.photo %}{{ item.submission.student.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                                     alt="Student Photo" 
+                                                     class="rounded-circle me-2"
+                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                                <div>
+                                                    <h6 class="mb-0">{{ item.submission.student.get_full_name }}</h6>
+                                                    <small class="text-muted">{{ item.submission.student.student_id }}</small>
+                                                </div>
+                                            {% else %}
+                                                <img src="{% if item.student.photo %}{{ item.student.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                                     alt="Student Photo" 
+                                                     class="rounded-circle me-2"
+                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                                <div>
+                                                    <h6 class="mb-0">{{ item.student.get_full_name }}</h6>
+                                                    <small class="text-muted">{{ item.student.student_id }}</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if item.submission %}
+                                            <div class="d-flex flex-column">
+                                                <span>{{ item.submission.submitted_at|date:"F d, Y" }}</span>
+                                                <small class="text-muted">{{ item.submission.submitted_at|time:"g:i A" }}</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">Not submitted</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ item.status_color }}">
+                                            {{ item.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if item.grade %}
+                                            <span class="badge bg-primary">{{ item.grade.score }}/100 ({{ item.grade.grade }})</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Graded</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.submission %}
+                                            <div class="btn-group">
+                                                <a href="{% url 'teacher_view_submission' assignment.id item.submission.id %}" class="btn btn-sm btn-outline-primary" title="View Submission">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#gradeModal"
+                                                        data-submission-id="{{ item.submission.id }}"
+                                                        data-student-name="{{ item.submission.student.get_full_name }}"
+                                                        data-current-score="{% if item.grade %}{{ item.grade.score }}{% else %}0{% endif %}"
+                                                        data-current-grade="{% if item.grade %}{{ item.grade.grade }}{% else %}{% endif %}"
+                                                        title="Grade">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                {% if item.submission.file %}
+                                                    <a href="{{ item.submission.file.url }}" class="btn btn-sm btn-outline-info" title="Download" download>
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="#" class="btn btn-sm btn-outline-warning" title="Send Message">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No submission</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                                        <h4>No Submissions Found</h4>
+                                        <p class="text-muted">No students have submitted this assignment yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if submissions.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if submissions.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ submissions.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in submissions.paginator.page_range %}
+                            <li class="page-item {% if submissions.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            
+                            {% if submissions.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ submissions.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Assignment Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Grade Assignment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="gradeForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <input type="text" class="form-control" id="studentName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assignment</label>
+                        <input type="text" class="form-control" value="{{ assignment.title }}" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="score" class="form-label">Score</label>
+                                <input type="number" class="form-control" name="score" id="score" min="0" max="100" required>
+                                <small class="text-muted">Out of 100</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="grade_letter" class="form-label">Grade</label>
+                                <select class="form-select" name="grade_letter" id="grade_letter" required>
+                                    <option value="">Select Grade</option>
+                                    <option value="A+">A+ (90-100)</option>
+                                    <option value="A">A (80-89)</option>
+                                    <option value="B">B (70-79)</option>
+                                    <option value="C">C (60-69)</option>
+                                    <option value="D">D (50-59)</option>
+                                    <option value="F">F (0-49)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" name="remarks" id="remarks" rows="3" placeholder="Add any feedback for the student..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .progress {
+        background-color: #e9ecef;
+    }
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeModal = document.getElementById('gradeModal');
+    const gradeForm = document.getElementById('gradeForm');
+    const studentNameInput = document.getElementById('studentName');
+    const scoreInput = document.getElementById('score');
+    const gradeLetterSelect = document.getElementById('grade_letter');
+    const remarksTextarea = document.getElementById('remarks');
+
+    // Handle grade button clicks
+    document.querySelectorAll('[data-bs-target="#gradeModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const submissionId = this.getAttribute('data-submission-id');
+            const studentName = this.getAttribute('data-student-name');
+            const currentScore = this.getAttribute('data-current-score');
+            const currentGrade = this.getAttribute('data-current-grade');
+
+            // Set form action
+            gradeForm.action = `{% url 'teacher_grade_submission' assignment.id 0 %}`.replace('0', submissionId);
+
+            // Populate modal fields
+            studentNameInput.value = studentName;
+            scoreInput.value = currentScore || '';
+            gradeLetterSelect.value = currentGrade || '';
+            remarksTextarea.value = `Grade for {{ assignment.title }}`;
+        });
+    });
+
+    // Auto-select grade based on score
+    scoreInput.addEventListener('input', function() {
+        const score = parseInt(this.value);
+        if (score >= 90) {
+            gradeLetterSelect.value = 'A+';
+        } else if (score >= 80) {
+            gradeLetterSelect.value = 'A';
+        } else if (score >= 70) {
+            gradeLetterSelect.value = 'B';
+        } else if (score >= 60) {
+            gradeLetterSelect.value = 'C';
+        } else if (score >= 50) {
+            gradeLetterSelect.value = 'D';
+        } else if (score >= 0) {
+            gradeLetterSelect.value = 'F';
+        }
+    });
+});
+</script>
+{% endblock %} 

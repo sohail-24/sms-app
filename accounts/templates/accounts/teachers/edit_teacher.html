@@ -1,0 +1,825 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Edit Teacher - {{ teacher.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Edit Teacher</h5>
+                        </div>
+                        <div class="col text-end">
+                            <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Teacher Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" action="{% url 'edit_teacher' teacher.id %}">
+                        {% csrf_token %}
+                        
+                        <!-- Teacher ID Section -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.teacher_id.id_for_label }}" class="form-label">
+                                        <i class="fas fa-id-card me-2"></i>Teacher ID
+                                    </label>
+                                    {{ form.teacher_id }}
+                                    {% if form.teacher_id.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.teacher_id.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Teacher ID must be unique. Current ID: <strong>{{ teacher.teacher_id }}</strong>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Empty column for spacing -->
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Information -->
+                        <h5 class="mb-3 text-primary">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.first_name.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.last_name.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.phone_number.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Information -->
+                        <h5 class="mb-3 text-primary">
+                            <i class="fas fa-briefcase me-2"></i>Professional Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                                    {{ form.department }}
+                                    {% if form.department.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.department.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                                    {{ form.date_of_birth }}
+                                    {% if form.date_of_birth.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.date_of_birth.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+                                    {{ form.gender }}
+                                    {% if form.gender.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.gender.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.qualification.id_for_label }}" class="form-label">Qualification</label>
+                                    {{ form.qualification }}
+                                    {% if form.qualification.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.qualification.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <h5 class="mb-3 text-primary">
+                            <i class="fas fa-map-marker-alt me-2"></i>Contact Information
+                        </h5>
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.address.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Profile Photo -->
+                        <h5 class="mb-3 text-primary">
+                            <i class="fas fa-camera me-2"></i>Profile Photo
+                        </h5>
+                        <div class="mb-3">
+                            <label for="{{ form.photo.id_for_label }}" class="form-label">Profile Photo</label>
+                            {% if teacher.photo %}
+                            <div class="current-photo mb-3">
+                                <img src="{{ teacher.photo.url }}" alt="{{ teacher.get_full_name }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+                                <small class="text-muted d-block mt-2">Current profile photo</small>
+                            </div>
+                            {% endif %}
+                            <div class="input-group">
+                                {{ form.photo }}
+                                <button type="button" class="btn btn-outline-secondary" id="clearPhotoBtn" style="display: none;">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                Maximum file size: 5MB. Supported formats: JPG, PNG, GIF. 
+                                <strong>You can crop the image after selecting.</strong>
+                            </small>
+                            {% if form.photo.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.photo.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Change Password Section -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-lock me-2"></i>Change Password
+                                </h6>
+                                <small class="text-muted">Leave password fields empty if you don't want to change the password</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="current_password" class="form-label">Current Password</label>
+                                            <input type="password" class="form-control" id="current_password" name="current_password" placeholder="Enter current password">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="new_password1" class="form-label">New Password</label>
+                                            <input type="password" class="form-control" id="new_password1" name="new_password1" placeholder="Enter new password">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="new_password2" class="form-label">Confirm New Password</label>
+                                            <input type="password" class="form-control" id="new_password2" name="new_password2" placeholder="Confirm new password">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Image Cropper Modal for Teacher Edit -->
+<div class="modal fade" id="teacherImageCropperModal" tabindex="-1" aria-labelledby="teacherImageCropperModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherImageCropperModalLabel">Crop Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="teacherCropperImage" src="" alt="Image to crop">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="teacherCropButton">Crop & Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
+<!-- Cropper.js JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+        border: 1px solid #ddd;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        outline: 0;
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+    
+    .input-group-text {
+        font-size: 0.875rem;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+    }
+    
+    .mb-3 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+    }
+    
+    /* Image Cropper Styles */
+    .img-container {
+        max-height: 400px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    #teacherCropperImage {
+        max-width: 100%;
+        display: block;
+    }
+
+    .cropper-view-box,
+    .cropper-face {
+        border-radius: 50%;
+    }
+
+    .cropper-modal {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .cropper-view-box {
+        box-shadow: 0 0 0 1px #39f;
+        outline: 0;
+    }
+
+    .cropper-point {
+        background-color: #39f;
+        width: 10px;
+        height: 10px;
+        opacity: 0.75;
+    }
+
+    .cropper-line {
+        background-color: #39f;
+        opacity: 0.5;
+    }
+
+    #teacherCropButton {
+        position: relative;
+    }
+
+    #teacherCropButton.loading {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    #teacherCropButton.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s linear infinite;
+    }
+
+    @keyframes button-loading-spinner {
+        from {
+            transform: rotate(0turn);
+        }
+        to {
+            transform: rotate(1turn);
+        }
+    }
+    
+    .current-photo img {
+        border: 3px solid #dee2e6;
+    }
+    
+    /* Section Headers */
+    h5.text-primary {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem !important;
+        font-weight: 600;
+    }
+    
+    h5.text-primary i {
+        color: #007bff;
+    }
+    
+    /* Teacher ID specific styling */
+    input[name="teacher_id"] {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    input[name="teacher_id"]:focus {
+        background-color: #f8f9ff;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const firstNameInput = document.querySelector('input[name="first_name"]');
+        const lastNameInput = document.querySelector('input[name="last_name"]');
+        const teacherIdInput = document.querySelector('input[name="teacher_id"]');
+
+        // Name validation function
+        function validateName(name) {
+            return /^[a-zA-Z\s]*$/.test(name);
+        }
+        
+        // Teacher ID validation function
+        function validateTeacherId(id) {
+            // Teacher ID should be alphanumeric and can contain underscores or hyphens
+            return /^[a-zA-Z0-9_-]+$/.test(id) && id.length >= 3;
+        }
+
+        // Function to show popup message
+        function showPopup(input, message) {
+            // Remove any existing popup
+            const existingPopup = input.parentElement.querySelector('.name-validation-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            // Create and show new popup
+            const popup = document.createElement('div');
+            popup.className = 'name-validation-popup';
+            popup.style.cssText = `
+                position: absolute;
+                background-color: #ff4444;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-top: 5px;
+                z-index: 1000;
+            `;
+            popup.textContent = message;
+            input.parentElement.style.position = 'relative';
+            input.parentElement.appendChild(popup);
+        }
+
+        // Add input event listeners for real-time validation
+        firstNameInput.addEventListener('input', function() {
+            if (!validateName(this.value)) {
+                showPopup(this, 'Name should contain only characters');
+                this.style.borderColor = '#ff4444';
+            } else {
+                const popup = this.parentElement.querySelector('.name-validation-popup');
+                if (popup) popup.remove();
+                this.style.borderColor = '';
+            }
+        });
+
+        lastNameInput.addEventListener('input', function() {
+            if (!validateName(this.value)) {
+                showPopup(this, 'Name should contain only characters');
+                this.style.borderColor = '#ff4444';
+            } else {
+                const popup = this.parentElement.querySelector('.name-validation-popup');
+                if (popup) popup.remove();
+                this.style.borderColor = '';
+            }
+        });
+
+        // Teacher ID validation
+        if (teacherIdInput) {
+            teacherIdInput.addEventListener('input', function() {
+                if (this.value.length > 0 && !validateTeacherId(this.value)) {
+                    showPopup(this, 'Teacher ID should be at least 3 characters and contain only letters, numbers, underscores, or hyphens');
+                    this.style.borderColor = '#ff4444';
+                } else if (this.value.length > 0) {
+                    const popup = this.parentElement.querySelector('.name-validation-popup');
+                    if (popup) popup.remove();
+                    this.style.borderColor = '#28a745';
+                } else {
+                    const popup = this.parentElement.querySelector('.name-validation-popup');
+                    if (popup) popup.remove();
+                    this.style.borderColor = '';
+                }
+            });
+        }
+
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            if (!validateName(firstNameInput.value) || !validateName(lastNameInput.value)) {
+                e.preventDefault();
+                alert('First name and last name must contain only characters');
+            }
+        });
+
+        // Password validation
+        const currentPassword = document.getElementById('current_password');
+        const newPassword1 = document.getElementById('new_password1');
+        const newPassword2 = document.getElementById('new_password2');
+
+        // Password strength validation
+        function validatePasswordStrength(password) {
+            if (password.length < 8) return false;
+            if (!/(?=.*[a-z])/.test(password)) return false;
+            if (!/(?=.*[A-Z])/.test(password)) return false;
+            if (!/(?=.*\d)/.test(password)) return false;
+            return true;
+        }
+
+        // Show password validation popup
+        function showPasswordPopup(input, message, isError = true) {
+            const existingPopup = input.parentElement.querySelector('.password-validation-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            const popup = document.createElement('div');
+            popup.className = 'password-validation-popup';
+            popup.style.cssText = `
+                position: absolute;
+                background-color: ${isError ? '#ff4444' : '#28a745'};
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-top: 5px;
+                z-index: 1000;
+                max-width: 300px;
+            `;
+            popup.textContent = message;
+            input.parentElement.style.position = 'relative';
+            input.parentElement.appendChild(popup);
+        }
+
+        // Password validation events
+        if (newPassword1) {
+            newPassword1.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    if (!validatePasswordStrength(this.value)) {
+                        showPasswordPopup(this, 'Password must be at least 8 characters with uppercase, lowercase, and number');
+                        this.style.borderColor = '#ff4444';
+                    } else {
+                        showPasswordPopup(this, 'Strong password!', false);
+                        this.style.borderColor = '#28a745';
+                    }
+                } else {
+                    const popup = this.parentElement.querySelector('.password-validation-popup');
+                    if (popup) popup.remove();
+                    this.style.borderColor = '';
+                }
+            });
+        }
+
+        if (newPassword2) {
+            newPassword2.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    if (this.value !== newPassword1.value) {
+                        showPasswordPopup(this, 'Passwords do not match');
+                        this.style.borderColor = '#ff4444';
+                    } else {
+                        showPasswordPopup(this, 'Passwords match!', false);
+                        this.style.borderColor = '#28a745';
+                    }
+                } else {
+                    const popup = this.parentElement.querySelector('.password-validation-popup');
+                    if (popup) popup.remove();
+                    this.style.borderColor = '';
+                }
+            });
+        }
+
+        // Enhanced form submission validation
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Teacher ID validation
+            if (teacherIdInput && teacherIdInput.value && !validateTeacherId(teacherIdInput.value)) {
+                isValid = false;
+                alert('Teacher ID must be at least 3 characters and contain only letters, numbers, underscores, or hyphens');
+            }
+            
+            // Name validation
+            if (!validateName(firstNameInput.value) || !validateName(lastNameInput.value)) {
+                isValid = false;
+                alert('First name and last name must contain only characters');
+            }
+            
+            // Password validation (only if password fields are filled)
+            if (newPassword1 && newPassword1.value.length > 0) {
+                if (!currentPassword.value) {
+                    isValid = false;
+                    alert('Please enter your current password to change it');
+                } else if (!validatePasswordStrength(newPassword1.value)) {
+                    isValid = false;
+                    alert('New password must be at least 8 characters with uppercase, lowercase, and number');
+                } else if (newPassword1.value !== newPassword2.value) {
+                    isValid = false;
+                    alert('New passwords do not match');
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        // Image Cropper Functionality
+        let teacherCropper = null;
+        let originalTeacherFile = null;
+        let croppedTeacherFile = null;
+        
+        const photoInput = document.querySelector('input[type="file"][name="photo"]');
+        const clearPhotoBtn = document.getElementById('clearPhotoBtn');
+        const cropperModal = document.getElementById('teacherImageCropperModal');
+        const cropperImage = document.getElementById('teacherCropperImage');
+        const cropButton = document.getElementById('teacherCropButton');
+        
+        function initializeTeacherCropper(imageFile) {
+            originalTeacherFile = imageFile;
+            
+            // Create a URL for the image file
+            const imageUrl = URL.createObjectURL(imageFile);
+            cropperImage.src = imageUrl;
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(cropperModal);
+            modal.show();
+        }
+        
+        // Initialize cropper when modal is shown
+        cropperModal.addEventListener('shown.bs.modal', function () {
+            if (teacherCropper) {
+                teacherCropper.destroy();
+            }
+            
+            teacherCropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+                ready: function() {
+                    // Set initial crop box to be circular
+                    const containerData = teacherCropper.getContainerData();
+                    const size = Math.min(containerData.width, containerData.height) * 0.8;
+                    teacherCropper.setCropBoxData({
+                        width: size,
+                        height: size,
+                        left: (containerData.width - size) / 2,
+                        top: (containerData.height - size) / 2
+                    });
+                }
+            });
+        });
+        
+        // Clean up when modal is hidden
+        cropperModal.addEventListener('hidden.bs.modal', function () {
+            if (teacherCropper) {
+                teacherCropper.destroy();
+                teacherCropper = null;
+            }
+            URL.revokeObjectURL(cropperImage.src);
+        });
+        
+        // Handle crop button click
+        cropButton.addEventListener('click', async function() {
+            if (!teacherCropper) {
+                return;
+            }
+
+            try {
+                // Show loading state
+                cropButton.classList.add('loading');
+                cropButton.disabled = true;
+
+                const canvas = teacherCropper.getCroppedCanvas({
+                    width: 300,
+                    height: 300,
+                    fillColor: '#fff',
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                });
+                
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, originalTeacherFile.type, 0.95));
+                
+                if (!blob) {
+                    throw new Error('Failed to create blob from canvas');
+                }
+
+                croppedTeacherFile = new File([blob], originalTeacherFile.name, {
+                    type: originalTeacherFile.type,
+                    lastModified: new Date().getTime()
+                });
+                
+                // Create a new FileList with the cropped file
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(croppedTeacherFile);
+                photoInput.files = dataTransfer.files;
+
+                // Show success feedback
+                clearPhotoBtn.style.display = 'inline-block';
+                
+                // Update the current photo preview if exists
+                const currentPhotoDiv = document.querySelector('.current-photo');
+                if (currentPhotoDiv) {
+                    const currentImg = currentPhotoDiv.querySelector('img');
+                    if (currentImg) {
+                        currentImg.src = URL.createObjectURL(croppedTeacherFile);
+                        currentImg.style.border = '3px solid #28a745';
+                    }
+                    const currentText = currentPhotoDiv.querySelector('small');
+                    if (currentText) {
+                        currentText.textContent = 'New cropped photo (will be saved when form is submitted)';
+                        currentText.className = 'text-success d-block mt-2';
+                    }
+                }
+
+                // Close the modal
+                const modalInstance = bootstrap.Modal.getInstance(cropperModal);
+                modalInstance.hide();
+                
+                // Show success message
+                alert('Image cropped successfully! Click "Save Changes" to update your profile.');
+
+            } catch (error) {
+                console.error('Error during crop:', error);
+                alert('Failed to crop the image. Please try again.');
+            } finally {
+                // Reset button state
+                cropButton.classList.remove('loading');
+                cropButton.disabled = false;
+            }
+        });
+        
+        // Handle file input change
+        if (photoInput) {
+            photoInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    
+                    // Check if file is an image
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file.');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Check file size (max 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size should not exceed 5MB.');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Initialize cropper
+                    initializeTeacherCropper(file);
+                }
+            });
+        }
+        
+        if (clearPhotoBtn) {
+            clearPhotoBtn.addEventListener('click', function() {
+                photoInput.value = '';
+                this.style.display = 'none';
+                
+                // Reset current photo preview
+                const currentPhotoDiv = document.querySelector('.current-photo');
+                if (currentPhotoDiv) {
+                    const currentImg = currentPhotoDiv.querySelector('img');
+                    if (currentImg && currentImg.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(currentImg.src);
+                        // Reset to original photo if it exists
+                        {% if teacher.photo %}
+                        currentImg.src = "{{ teacher.photo.url }}";
+                        currentImg.style.border = '3px solid #dee2e6';
+                        {% endif %}
+                    }
+                    const currentText = currentPhotoDiv.querySelector('small');
+                    if (currentText) {
+                        currentText.textContent = 'Current profile photo';
+                        currentText.className = 'text-muted d-block mt-2';
+                    }
+                }
+                
+                croppedTeacherFile = null;
+            });
+        }
+    });
+</script>
+{% endblock %} 

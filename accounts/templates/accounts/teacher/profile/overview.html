@@ -1,0 +1,132 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title %}Profile Overview - Teacher Dashboard{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Card -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <img src="{% if teacher.photo %}{{ teacher.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                             alt="Profile Picture" 
+                             class="rounded-circle"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    </div>
+                    <h4>{{ teacher.get_full_name }}</h4>
+                    <p class="text-muted">{{ teacher.department.name }}</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateProfilePicture">
+                            <i class="fas fa-camera me-2"></i>Update Profile Picture
+                        </button>
+                        <a href="{% url 'teacher_profile_edit' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Full Name:</strong> {{ teacher.get_full_name }}</p>
+                            <p><strong>Email:</strong> {{ teacher.user.email }}</p>
+                            <!-- <p><strong>Phone:</strong> {{ teacher.phone }}</p> -->
+                        </div>
+                        <div class="col-md-6">
+                            <!-- <p><strong>Department:</strong> {{ teacher.department.name }}</p> -->
+                            <p><strong>Designation:</strong> {{ teacher.designation }}</p>
+                            <p><strong>Joining Date:</strong> {{ teacher.joining_date|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Address:</strong> {{ teacher.address }}</p>
+                            <p><strong>City:</strong> {{ teacher.city }}</p>
+                            <p><strong>State:</strong> {{ teacher.state }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Country:</strong> {{ teacher.country }}</p>
+                            <p><strong>Postal Code:</strong> {{ teacher.postal_code }}</p>
+                            <p><strong>Phone Number:</strong> {{ teacher.phone_number }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Professional Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Qualification:</strong> {{ teacher.qualification }}</p>
+                            <p><strong>Specialization:</strong> {{ teacher.specialization }}</p>
+                            <p><strong>Experience:</strong> {{ teacher.experience }} years</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Current Status:</strong> 
+                                <span class="badge bg-{{ teacher.is_active|yesno:'success,danger' }}">
+                                    {{ teacher.is_active|yesno:'Active,Inactive' }}
+                                </span>
+                            </p>
+                            <p><strong>Last Login:</strong> {{ teacher.user.last_login|date:"F d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Profile Picture Modal -->
+<div class="modal fade" id="updateProfilePicture" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'teacher_profile_picture_update' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Choose New Picture</label>
+                        <input type="file" class="form-control" name="photo" accept="image/*" required>
+                        <small class="text-muted">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'accounts/components/image_cropper_modal.html' %}
+{% endblock %} 

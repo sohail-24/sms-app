@@ -1,0 +1,209 @@
+{% extends 'accounts/base_teacher.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">{{ student.get_full_name }} - Attendance Records</h4>
+                            <small class="text-muted">Student ID: {{ student.student_id }}</small>
+                        </div>
+                        <a href="{% url 'teacher_student_detail' student.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Student Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                    <h4>{{ total_present }}</h4>
+                    <small class="text-muted">Days Present</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-times fa-2x text-danger mb-2"></i>
+                    <h4>{{ total_absent }}</h4>
+                    <small class="text-muted">Days Absent</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar fa-2x text-info mb-2"></i>
+                    <h4>{{ total_classes }}</h4>
+                    <small class="text-muted">Total Classes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-percentage fa-2x text-primary mb-2"></i>
+                    <h4>{{ attendance_percentage|floatformat:1 }}%</h4>
+                    <small class="text-muted">Attendance Rate</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course-wise Attendance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course-wise Attendance</h5>
+                </div>
+                <div class="card-body">
+                    {% if course_attendance %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Total Classes</th>
+                                        <th>Present</th>
+                                        <th>Absent</th>
+                                        <th>Attendance %</th>
+                                        <th>Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course_att in course_attendance %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ course_att.course.title }}</strong><br>
+                                            <small class="text-muted">{{ course_att.course.course_code }}</small>
+                                        </td>
+                                        <td>{{ course_att.total_classes }}</td>
+                                        <td>
+                                            <span class="badge badge-success">{{ course_att.present_count }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-danger">{{ course_att.absent_count }}</span>
+                                        </td>
+                                        <td>{{ course_att.attendance_percentage|floatformat:1 }}%</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if course_att.attendance_percentage >= 75 %}bg-success{% elif course_att.attendance_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ course_att.attendance_percentage }}%" 
+                                                     aria-valuenow="{{ course_att.attendance_percentage }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ course_att.attendance_percentage|floatformat:0 }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No attendance records found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Attendance Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Detailed Attendance Records</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="filterAttendance('all')">All</button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="filterAttendance('present')">Present</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="filterAttendance('absent')">Absent</button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="filterAttendance('late')">Late</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if attendance_records %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="attendanceTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Course</th>
+                                        <th>Status</th>
+                                        <th>Marked By</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in attendance_records %}
+                                    <tr data-status="{{ record.status }}">
+                                        <td>{{ record.date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <strong>{{ record.course.title }}</strong><br>
+                                            <small class="text-muted">{{ record.course.course_code }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if record.status == 'present' %}success{% elif record.status == 'absent' %}danger{% elif record.status == 'late' %}warning{% else %}secondary{% endif %}">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ record.marked_by.get_full_name|default:"System" }}</td>
+                                        <td>{{ record.remarks|default:"-" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No attendance records found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterAttendance(status) {
+    const table = document.getElementById('attendanceTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowStatus = row.getAttribute('data-status');
+        
+        if (status === 'all' || rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+    
+    // Update button states
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+// Set default active button
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.btn-group .btn').classList.add('active');
+});
+</script>
+{% endblock %} 

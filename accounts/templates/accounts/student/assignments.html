@@ -1,0 +1,266 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Current Assignments</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="pending">Pending</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="submitted">Submitted</button>
+                        <button type="button" class="btn btn-outline-primary" data-filter="graded">Graded</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Course</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Submission Details</th>
+                                    <th>Grade</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr class="assignment-row" data-status="{{ assignment.status|lower }}">
+                                    <td>
+                                        <div>
+                                            <strong>{{ assignment.title }}</strong>
+                                            {% if assignment.file %}
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-paperclip"></i> Has attachment
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ assignment.course.course_code }}</span>
+                                        <small class="d-block text-muted">{{ assignment.course.title }}</small>
+                                    </td>
+                                    <td>
+                                        <div>{{ assignment.due_date|date:"M d, Y" }}</div>
+                                        <small class="text-muted">{{ assignment.due_date|time:"g:i A" }}</small>
+                                        {% now "Y-m-d H:i" as current_time %}
+                                        {% if assignment.due_date|date:"Y-m-d H:i" < current_time and assignment.status == 'PENDING' %}
+                                            <small class="text-danger d-block"><i class="fas fa-exclamation-triangle"></i> Overdue</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ assignment.status_color }}">{{ assignment.status }}</span>
+                                    </td>
+                                    <td>
+                                        {% if assignment.status == 'SUBMITTED' or assignment.status == 'GRADED' %}
+                                            <div class="small">
+                                                <strong>Submitted:</strong> {{ assignment.submitted_at|date:"M d, Y" }}<br>
+                                                <small class="text-muted">{{ assignment.submitted_at|time:"g:i A" }}</small>
+                                                {% if assignment.submission.file %}
+                                                    <br><a href="{{ assignment.submission.file.url }}" class="text-primary" download>
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        {% elif assignment.status == 'PENDING' %}
+                                            <small class="text-muted">Not submitted yet</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assignment.status == 'GRADED' %}
+                                            <div>
+                                                <span class="badge bg-primary">{{ assignment.score }}/100</span>
+                                                <span class="badge bg-secondary">{{ assignment.grade_letter }}</span>
+                                                <small class="text-muted d-block">Graded: {{ assignment.graded_at|date:"M d, Y" }}</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm">
+                                            <a href="{% url 'student_assignment_detail' assignment.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            {% if assignment.status == 'PENDING' %}
+                                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#submitAssignment{{ assignment.id }}">
+                                                    <i class="fas fa-upload"></i> Submit
+                                                </button>
+                                            {% elif assignment.status == 'SUBMITTED' %}
+                                                <span class="badge bg-info">Submitted</span>
+                                            {% elif assignment.status == 'GRADED' %}
+                                                <span class="badge bg-success">Graded</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                                        <h4>No Assignments Found</h4>
+                                        <p class="text-muted">You don't have any assignments yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <!-- Submit Assignment Modals -->
+                        {% for assignment in assignments %}
+                        {% if assignment.status == 'PENDING' %}
+                        <div class="modal fade" id="submitAssignment{{ assignment.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Submit Assignment - {{ assignment.title }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="post" action="{% url 'student_submit_assignment' assignment.id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Course</label>
+                                                <input type="text" class="form-control" value="{{ assignment.course.course_code }} - {{ assignment.course.title }}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Due Date</label>
+                                                <input type="text" class="form-control" value="{{ assignment.due_date|date:'F d, Y g:i A' }}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Assignment File *</label>
+                                                <input type="file" class="form-control" name="assignment_file" accept=".pdf,.doc,.docx,.txt,.jpg,.png" required>
+                                                <small class="text-muted">Accepted formats: PDF, DOC, DOCX, TXT, JPG, PNG</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Comments (Optional)</label>
+                                                <textarea class="form-control" name="comments" rows="3" placeholder="Add any comments about your submission..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-upload"></i> Submit Assignment
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Assignment Calendar</h5>
+                </div>
+                <div class="card-body">
+                    <div id="assignmentCalendar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Assignment Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="assignmentStats"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Assignment filtering
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            
+            // Update active button
+            document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter rows
+            document.querySelectorAll('.assignment-row').forEach(row => {
+                if (filter === 'all' || row.dataset.status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Initialize Calendar
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('assignmentCalendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: [
+                {% for assignment in assignments %}
+                {
+                    title: '{{ assignment.title }}',
+                    start: '{{ assignment.due_date|date:"Y-m-d" }}',
+                    color: '{% if assignment.status == "PENDING" %}#ffc107{% elif assignment.status == "SUBMITTED" %}#17a2b8{% else %}#28a745{% endif %}'
+                },
+                {% endfor %}
+            ]
+        });
+        calendar.render();
+    });
+
+    // Initialize Statistics Chart
+    var ctx = document.getElementById('assignmentStats').getContext('2d');
+    var assignmentStats = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Pending', 'Submitted', 'Graded'],
+            datasets: [{
+                data: [
+                    {{ pending_count }},
+                    {{ submitted_count }},
+                    {{ graded_count }}
+                ],
+                backgroundColor: [
+                    '#ffc107',
+                    '#17a2b8',
+                    '#28a745'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+{% endblock %} 

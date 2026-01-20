@@ -1,0 +1,402 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block extra_css %}
+<style type="text/css">
+.progress-sm {
+    height: 5px !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h2>Welcome, {{ student.get_full_name }}</h2>
+        <p>Track your academic progress and manage your school activities</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ enrolled_courses|length }}</div>
+                <div class="stat-label">Enrolled Courses</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-book"></i> Current Grade
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ current_grade }}</div>
+                <div class="stat-label">Current Grade</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-graduation-cap"></i> Academic Level
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ upcoming_assignments.count }}</div>
+                <div class="stat-label">Pending Assignments</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-tasks"></i> Due Soon
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ upcoming_exams.count }}</div>
+                <div class="stat-label">Upcoming Exams</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-calendar-check"></i> This Month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Course Overview -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Current Courses</h5>
+                    <a href="{% url 'student_courses' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Teacher</th>
+                                    <th>Schedule</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in enrolled_courses %}
+                                <tr>
+                                    <td>{{ course.course_code }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.teacher.get_full_name }}</td>
+                                    <td>{{ course.schedule }}</td>
+                                    <td>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ course.progress }}%" aria-valuenow="{{ course.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small>{{ course.progress }}%</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No courses enrolled for current grade.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Courses for Enrollment -->
+            {% if available_courses %}
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Available Courses for Enrollment</h5>
+                    <a href="{% url 'student_courses' %}" class="btn btn-sm btn-success">View All Available</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Teacher</th>
+                                    <th>Credits</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in available_courses %}
+                                <tr>
+                                    <td>{{ course.course_code }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.teacher.get_full_name }}</td>
+                                    <td>{{ course.credits }}</td>
+                                    <td>
+                                        <a href="{% url 'student_enroll_course' course.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus"></i> Enroll
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Upcoming Activities -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-list">
+                        {% for assignment in upcoming_assignments %}
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>{{ assignment.title }}</h6>
+                                <p class="text-muted mb-0">Due: {{ assignment.due_date|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% for exam in upcoming_exams %}
+                        <div class="activity-item">
+                            <div class="activity-icon bg-danger">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>{{ exam.title }}</h6>
+                                <p class="text-muted mb-0">Date: {{ exam.date|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row mt-4">
+        <!-- Attendance & Performance -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Attendance Overview</h5>
+                    <a href="{% url 'student_attendance' %}" class="btn btn-sm btn-primary">View Details</a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h3 class="mb-0 text-success">{{ attendance_percentage }}%</h3>
+                                <small class="text-muted">Overall Attendance</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="mb-0">{{ present_classes }}/{{ total_classes }}</h4>
+                                <small class="text-muted">Classes Attended</small>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas id="attendanceChart" height="200"></canvas>
+                    
+                    <!-- Course-wise attendance summary -->
+                    {% if course_attendance_summary %}
+                    <div class="mt-3">
+                        <h6 class="mb-2">Course Attendance</h6>
+                        {% for course_data in course_attendance_summary %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small>{{ course_data.course.course_code }}</small>
+                            <div class="text-end">
+                                <span class="badge {% if course_data.attendance_percentage >= 85 %}bg-success{% elif course_data.attendance_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ course_data.attendance_percentage }}%
+                                </span>
+                                <small class="text-muted ms-1">({{ course_data.present_classes }}/{{ course_data.total_classes }})</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Exams -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Upcoming Exams</h5>
+                    <a href="{% url 'student_exams' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Venue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exam in upcoming_exams %}
+                                <tr>
+                                    <td>{{ exam.course.title }}</td>
+                                    <td>{{ exam.date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if exam.start_time %}
+                                            {{ exam.start_time|time:"h:i A" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ exam.venue }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No upcoming exams.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Third Row -->
+    <div class="row mt-4">
+        <!-- Recent Notices -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Notices</h5>
+                    <a href="{% url 'student_notices' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for notice in recent_notices %}
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ notice.title }}</h6>
+                            <small class="text-muted">{{ notice.created_at|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-0 mt-2">{{ notice.content|truncatewords:30 }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted">No recent notices.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Fee Payment Status -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Fee Payment Status</h5>
+                    <a href="{% url 'student_fees' %}" class="btn btn-sm btn-primary">View Details</a>
+                </div>
+                <div class="card-body">
+                    {% if pending_fees %}
+                    <div class="alert alert-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Pending Payment</h6>
+                            <span class="badge bg-warning">Due Soon</span>
+                        </div>
+                        <hr>
+                        <p class="mb-1"><strong>Amount:</strong> ${{ pending_fees.amount }}</p>
+                        <p class="mb-0"><strong>Due Date:</strong> {{ pending_fees.due_date|date:"M d, Y" }}</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <p class="mb-0">No pending payments.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Attendance Chart with real data
+    var ctx = document.getElementById('attendanceChart').getContext('2d');
+    var attendanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ month_labels|safe }},
+            datasets: [{
+                label: 'Attendance %',
+                data: {{ monthly_attendance|safe }},
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.1,
+                fill: true,
+                pointBackgroundColor: '#28a745',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Attendance: ' + context.parsed.y + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+</script>
+{% endblock %} 

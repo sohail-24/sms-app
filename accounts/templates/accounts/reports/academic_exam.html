@@ -1,0 +1,167 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Class:</strong> {{ class.name }}</li>
+<li><strong>Section:</strong> {{ class.section }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Class Overview -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Exam Summary</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Total Exams:</strong> {{ exams.count }}</li>
+                    <li><strong>Report Period:</strong> {{ start_date }} to {{ end_date }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Overview -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Performance Overview</h5>
+                <div style="height: 300px;">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exam Details -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Exam Details</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Duration</th>
+                                <th>Room</th>
+                                <th>Supervisor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr>
+                                <td>{{ exam.date|date:"d M Y, h:i A" }}</td>
+                                <td>{{ exam.course.title }}</td>
+                                <td>{{ exam.title }}</td>
+                                <td>{{ exam.get_exam_type_display }}</td>
+                                <td>{{ exam.duration }} minutes</td>
+                                <td>
+                                    {% with schedule=exam.examschedule_set.first %}
+                                        {{ schedule.room|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with schedule=exam.examschedule_set.first %}
+                                        {{ schedule.supervisor.get_full_name|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if exam.date < now %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Upcoming</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No exams found for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Results Summary</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Average Score</th>
+                                <th>Highest Score</th>
+                                <th>Lowest Score</th>
+                                <th>Pass Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            {% with stats=exam.get_statistics %}
+                            <tr>
+                                <td>{{ exam.course.title }}</td>
+                                <td>{{ stats.average_score|floatformat:1 }}</td>
+                                <td>{{ stats.highest_score|floatformat:1 }}</td>
+                                <td>{{ stats.lowest_score|floatformat:1 }}</td>
+                                <td>{{ stats.pass_rate|floatformat:1 }}%</td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(performanceCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for exam in exams %}'{{ exam.course.title }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Average Score',
+                data: [{% for exam in exams %}{% with stats=exam.get_statistics %}{{ stats.average_score }}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: '#4e73df'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

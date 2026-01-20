@@ -1,0 +1,390 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Schedule Exam - School Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-step {
+        display: none;
+    }
+    .form-step.active {
+        display: block;
+    }
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 1rem;
+        font-weight: bold;
+    }
+    .step.active {
+        background: #0d6efd;
+        color: white;
+    }
+    .step.completed {
+        background: #198754;
+        color: white;
+    }
+    .step-connector {
+        flex: 1;
+        height: 2px;
+        background: #e9ecef;
+        margin-top: 19px;
+    }
+    .step-connector.completed {
+        background: #198754;
+    }
+    .form-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .preview-item {
+        margin-bottom: 0.5rem;
+    }
+    .preview-label {
+        font-weight: 600;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Schedule Exam</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'examinations' %}">Examinations</a></li>
+                <li class="breadcrumb-item active">Schedule Exam</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Multi-step Form -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Create New Examination</h5>
+        </div>
+        <div class="card-body">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1-indicator">1</div>
+                <div class="step-connector" id="connector1"></div>
+                <div class="step" id="step2-indicator">2</div>
+                <div class="step-connector" id="connector2"></div>
+                <div class="step" id="step3-indicator">3</div>
+            </div>
+
+            <form method="post" id="examForm">
+                {% csrf_token %}
+                
+                <!-- Step 1: Exam Details -->
+                <div class="form-step active" id="step1">
+                    <h4 class="mb-4">Exam Details</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ form.course.id_for_label }}" class="form-label">Course/Subject *</label>
+                            {{ form.course }}
+                            {% if form.course.errors %}
+                                <div class="text-danger small">{{ form.course.errors }}</div>
+                            {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Exam Title *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small">{{ form.title.errors }}</div>
+                            {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ form.exam_type.id_for_label }}" class="form-label">Exam Type *</label>
+                            {{ form.exam_type }}
+                            {% if form.exam_type.errors %}
+                                <div class="text-danger small">{{ form.exam_type.errors }}</div>
+                            {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ form.total_marks.id_for_label }}" class="form-label">Total Marks *</label>
+                            {{ form.total_marks }}
+                            {% if form.total_marks.errors %}
+                                <div class="text-danger small">{{ form.total_marks.errors }}</div>
+                            {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">Date & Time *</label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small">{{ form.date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.duration.id_for_label }}" class="form-label">Duration *</label>
+                            {{ form.duration }}
+                            <div class="form-text">Format: HH:MM:SS (e.g., 02:00:00 for 2 hours)</div>
+                            {% if form.duration.errors %}
+                                <div class="text-danger small">{{ form.duration.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.instructions.id_for_label }}" class="form-label">Instructions</label>
+                        {{ form.instructions }}
+                        {% if form.instructions.errors %}
+                            <div class="text-danger small">{{ form.instructions.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Step 2: Schedule Details -->
+                <div class="form-step" id="step2">
+                    <h4 class="mb-4">Schedule Details</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ schedule_form.room.id_for_label }}" class="form-label">Room *</label>
+                            {{ schedule_form.room }}
+                            {% if schedule_form.room.errors %}
+                                <div class="text-danger small">{{ schedule_form.room.errors }}</div>
+                            {% endif %}
+                            
+                            <!-- Room suggestions datalist -->
+                            <datalist id="room-suggestions">
+                                <option value="Room 101">
+                                <option value="Room 102">
+                                <option value="Room 103">
+                                <option value="Lab 201">
+                                <option value="Lab 202">
+                                <option value="Computer Lab">
+                                <option value="Physics Lab">
+                                <option value="Chemistry Lab">
+                                <option value="Biology Lab">
+                                <option value="Library">
+                                <option value="Auditorium">
+                                <option value="Hall A">
+                                <option value="Hall B">
+                            </datalist>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ schedule_form.supervisor.id_for_label }}" class="form-label">Supervisor *</label>
+                            {{ schedule_form.supervisor }}
+                            {% if schedule_form.supervisor.errors %}
+                                <div class="text-danger small">{{ schedule_form.supervisor.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ schedule_form.start_time.id_for_label }}" class="form-label">Start Time *</label>
+                            {{ schedule_form.start_time }}
+                            {% if schedule_form.start_time.errors %}
+                                <div class="text-danger small">{{ schedule_form.start_time.errors }}</div>
+                            {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                            <label for="{{ schedule_form.end_time.id_for_label }}" class="form-label">End Time *</label>
+                            {{ schedule_form.end_time }}
+                            {% if schedule_form.end_time.errors %}
+                                <div class="text-danger small">{{ schedule_form.end_time.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Review -->
+                <div class="form-step" id="step3">
+                    <h4 class="mb-4">Review & Confirm</h4>
+                    <div class="form-preview" id="examPreview">
+                        <!-- Preview content will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="d-flex justify-content-between mt-4">
+                    <div>
+                    <a href="{% url 'examinations' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary" id="prevBtn" onclick="nextPrev(-1)" style="display: none;">Previous</button>
+                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextPrev(1)">Next</button>
+                        <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">Schedule Exam</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 0;
+
+function showStep(n) {
+    const steps = document.getElementsByClassName("form-step");
+    const stepIndicators = document.querySelectorAll(".step");
+    const connectors = document.querySelectorAll(".step-connector");
+    
+    // Hide all steps
+    for (let i = 0; i < steps.length; i++) {
+        steps[i].classList.remove("active");
+    }
+    
+    // Show current step
+    steps[n].classList.add("active");
+    
+    // Update step indicators
+    for (let i = 0; i < stepIndicators.length; i++) {
+        stepIndicators[i].classList.remove("active", "completed");
+        if (i < n) {
+            stepIndicators[i].classList.add("completed");
+        } else if (i === n) {
+            stepIndicators[i].classList.add("active");
+        }
+    }
+    
+    // Update connectors
+    for (let i = 0; i < connectors.length; i++) {
+        connectors[i].classList.remove("completed");
+        if (i < n) {
+            connectors[i].classList.add("completed");
+        }
+    }
+    
+    // Handle button visibility
+    document.getElementById("prevBtn").style.display = n === 0 ? "none" : "inline-block";
+    document.getElementById("nextBtn").style.display = n === (steps.length - 1) ? "none" : "inline-block";
+    document.getElementById("submitBtn").style.display = n === (steps.length - 1) ? "inline-block" : "none";
+    
+    // Generate preview on last step
+    if (n === steps.length - 1) {
+        generatePreview();
+    }
+}
+
+function nextPrev(n) {
+    const steps = document.getElementsByClassName("form-step");
+    
+    // Validate current step before proceeding
+    if (n === 1 && !validateStep(currentStep)) {
+        return false;
+    }
+    
+    currentStep = currentStep + n;
+    
+    if (currentStep >= steps.length) {
+        currentStep = steps.length - 1;
+        return false;
+    }
+    if (currentStep < 0) {
+        currentStep = 0;
+        return false;
+    }
+    
+    showStep(currentStep);
+}
+
+function validateStep(stepNum) {
+    let valid = true;
+    const currentStepElement = document.getElementsByClassName("form-step")[stepNum];
+    const inputs = currentStepElement.querySelectorAll("input[required], select[required], textarea[required]");
+    
+    inputs.forEach(function(input) {
+        if (!input.value.trim()) {
+            input.classList.add("is-invalid");
+            valid = false;
+        } else {
+            input.classList.remove("is-invalid");
+        }
+    });
+    
+    return valid;
+}
+
+function generatePreview() {
+    const form = document.getElementById('examForm');
+    const formData = new FormData(form);
+    
+    let previewHtml = '<h5 class="mb-3">Exam Information</h5>';
+    
+    // Exam details
+    const course = form.querySelector('[name="course"]');
+    const title = form.querySelector('[name="title"]');
+    const examType = form.querySelector('[name="exam_type"]');
+    const date = form.querySelector('[name="date"]');
+    const duration = form.querySelector('[name="duration"]');
+    const totalMarks = form.querySelector('[name="total_marks"]');
+    const instructions = form.querySelector('[name="instructions"]');
+    
+    // Schedule details
+    const room = form.querySelector('[name="room"]');
+    const supervisor = form.querySelector('[name="supervisor"]');
+    const startTime = form.querySelector('[name="start_time"]');
+    const endTime = form.querySelector('[name="end_time"]');
+    
+    previewHtml += `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="preview-item"><span class="preview-label">Course:</span> ${course.options[course.selectedIndex]?.text || 'Not selected'}</div>
+                <div class="preview-item"><span class="preview-label">Title:</span> ${title.value || 'Not provided'}</div>
+                <div class="preview-item"><span class="preview-label">Type:</span> ${examType.options[examType.selectedIndex]?.text || 'Not selected'}</div>
+                <div class="preview-item"><span class="preview-label">Date & Time:</span> ${formatDateTime(date.value)}</div>
+                <div class="preview-item"><span class="preview-label">Duration:</span> ${duration.value || 'Not provided'}</div>
+            </div>
+            <div class="col-md-6">
+                <div class="preview-item"><span class="preview-label">Total Marks:</span> ${totalMarks.value || 'Not provided'}</div>
+                <div class="preview-item"><span class="preview-label">Room:</span> ${room.value || 'Not provided'}</div>
+                <div class="preview-item"><span class="preview-label">Supervisor:</span> ${supervisor.options[supervisor.selectedIndex]?.text || 'Not selected'}</div>
+                <div class="preview-item"><span class="preview-label">Start Time:</span> ${startTime.value || 'Not provided'}</div>
+                <div class="preview-item"><span class="preview-label">End Time:</span> ${endTime.value || 'Not provided'}</div>
+            </div>
+        </div>
+    `;
+    
+    if (instructions.value.trim()) {
+        previewHtml += `<div class="preview-item mt-3"><span class="preview-label">Instructions:</span><br>${instructions.value}</div>`;
+    }
+    
+    document.getElementById('examPreview').innerHTML = previewHtml;
+}
+
+function formatDateTime(datetime) {
+    if (!datetime) return 'Not provided';
+    const date = new Date(datetime);
+    return date.toLocaleString();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    showStep(0);
+    
+    // Add real-time validation
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.hasAttribute('required') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

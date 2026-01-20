@@ -1,0 +1,334 @@
+{% extends 'accounts/base_teacher.html' %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Back to Grades Button -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'teacher_grades' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Grades
+            </a>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    {% if course_stats %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ course_stats.total_students }}</h4>
+                    <p class="mb-0">Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ course_stats.avg_grade }}%</h4>
+                    <p class="mb-0">Average Grade</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ course_stats.total_assignments }}</h4>
+                    <p class="mb-0">Assignments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ course_stats.total_exams }}</h4>
+                    <p class="mb-0">Exams</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        {% if course %}{{ course.title }} - Grades{% else %}Course Grades{% endif %}
+                    </h5>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-2">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 8%;">Student ID</th>
+                                    <th style="width: 15%;">Name</th>
+                                    <th style="width: 18%;">Assignments</th>
+                                    <th style="width: 18%;">Exams</th>
+                                    <th style="width: 12%;">Attendance</th>
+                                    <th style="width: 8%;">Total Score</th>
+                                    <th style="width: 8%;">Percentage</th>
+                                    <th style="width: 5%;">Grade</th>
+                                    <th style="width: 8%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if student_grades and student_grades|length > 0 %}
+                                    {% for grade in student_grades %}
+                                    <tr style="vertical-align: top;">
+                                        <td class="align-top">
+                                            <strong>{{ grade.student.student_id }}</strong>
+                                        </td>
+                                        <td class="align-top">
+                                            <div><strong>{{ grade.student.get_full_name }}</strong></div>
+                                            <small class="text-muted">{{ grade.student.email }}</small>
+                                        </td>
+                                        <td class="align-top">
+                                            <div class="mb-2">
+                                                <span class="badge bg-info me-1">{{ grade.completed_assignments }}/{{ grade.total_assignments }}</span>
+                                                <small class="text-muted">Completed</small>
+                                            </div>
+                                            {% if grade.assignment_scores %}
+                                                {% for score in grade.assignment_scores %}
+                                                    <div class="small mb-1 p-1 border-start border-2 border-info ps-2">
+                                                        <div class="fw-bold">{{ score.activity.title }}</div>
+                                                        <span class="{% if score.submitted %}text-success{% else %}text-warning{% endif %}">
+                                                            {{ score.score }}/{{ score.max_score }}
+                                                            {% if score.submitted %}<i class="fas fa-check-circle ms-1"></i>{% else %}<i class="fas fa-clock ms-1"></i>{% endif %}
+                                                        </span>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <small class="text-muted fst-italic">No assignments</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-top">
+                                            <div class="mb-2">
+                                                <span class="badge bg-warning me-1">{{ grade.graded_exams }}/{{ grade.total_exams }}</span>
+                                                <small class="text-muted">Graded</small>
+                                            </div>
+                                            {% if grade.exam_scores %}
+                                                {% for score in grade.exam_scores %}
+                                                    <div class="small mb-1 p-1 border-start border-2 border-warning ps-2">
+                                                        <div class="fw-bold">{{ score.examination.title }}</div>
+                                                        <span class="{% if score.marks > 0 %}text-success{% else %}text-muted{% endif %}">
+                                                            {{ score.marks }}/{{ score.total_marks }}
+                                                        </span>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <small class="text-muted fst-italic">No exams</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center align-top">
+                                            <div class="progress mb-1" style="height: 8px;">
+                                                <div class="progress-bar {% if grade.attendance_percentage >= 90 %}bg-success{% elif grade.attendance_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ grade.attendance_percentage }}%">
+                                                </div>
+                                            </div>
+                                            <small class="fw-bold">{{ grade.attendance_percentage }}%</small>
+                                        </td>
+                                        <td class="text-center align-top">
+                                            <h6 class="mb-0">{{ grade.total_score }}</h6>
+                                        </td>
+                                        <td class="text-center align-top">
+                                            <span class="badge fs-6 {% if grade.grade_percentage >= 90 %}bg-success{% elif grade.grade_percentage >= 80 %}bg-primary{% elif grade.grade_percentage >= 70 %}bg-warning{% elif grade.grade_percentage >= 60 %}bg-secondary{% else %}bg-danger{% endif %}">
+                                                {{ grade.grade_percentage }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if grade.grade_percentage >= 90 %}
+                                                A
+                                            {% elif grade.grade_percentage >= 80 %}
+                                                B
+                                            {% elif grade.grade_percentage >= 70 %}
+                                                C
+                                            {% elif grade.grade_percentage >= 60 %}
+                                                D
+                                            {% else %}
+                                                F
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'teacher_student_grades' grade.student.id %}" class="btn btn-sm btn-outline-success me-1">
+                                                <i class="fas fa-chart-line"></i> View Grades
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editGradeModal"
+                                                    data-student-id="{{ grade.student.id }}"
+                                                    data-student-name="{{ grade.student.get_full_name }}"
+                                                    onclick="loadEditData(this)">
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-5">
+                                            <div>
+                                                <i class="fas fa-user-graduate fa-3x mb-3"></i>
+                                                <h4>No students or grades found for this course.</h4>
+                                                <p class="mb-0">Once students are enrolled and grades are entered, they will appear here.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Single Edit Grade Modal (Outside of table loop for stability) -->
+<div class="modal fade" id="editGradeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalTitle">Edit Grades</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editGradeForm">
+                {% csrf_token %}
+                <div class="modal-body" id="editModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading grade data...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table td {
+        padding: 0.75rem;
+        vertical-align: top !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table tr {
+        min-height: 80px;
+    }
+    
+    .assignment-item, .exam-item {
+        margin-bottom: 4px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+    
+    .progress {
+        min-width: 80px;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        min-height: 400px;
+    }
+    
+    .fw-bold {
+        font-weight: 600 !important;
+    }
+    
+    .table th {
+        position: sticky;
+        top: 0;
+        background-color: #212529 !important;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadEditData(button) {
+    const studentId = button.getAttribute('data-student-id');
+    const studentName = button.getAttribute('data-student-name');
+    
+    // Update modal title
+    document.getElementById('editModalTitle').textContent = `Edit Grades - ${studentName}`;
+    
+    // Set form action
+    const form = document.getElementById('editGradeForm');
+    form.action = `{% url 'teacher_update_grades' course.id 0 %}`.replace('0', studentId);
+    
+    // Load current grades for this student via AJAX
+    fetch(`/accounts/teacher/student/${studentId}/grades-data/`)
+        .then(response => response.json())
+        .then(data => {
+            const modalBody = document.getElementById('editModalBody');
+            let html = '';
+            
+            if (data.grades && data.grades.length > 0) {
+                html += '<h6>Current Grades</h6>';
+                data.grades.forEach(grade => {
+                    html += `
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">${grade.subject}</label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control" 
+                                       name="grade_${grade.id}_score" 
+                                       value="${grade.score}" 
+                                       min="0" max="100" 
+                                       placeholder="Score">
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="grade_${grade.id}_grade">
+                                    <option value="">Select Grade</option>
+                                    <option value="A+" ${grade.grade === 'A+' ? 'selected' : ''}>A+ (90-100)</option>
+                                    <option value="A" ${grade.grade === 'A' ? 'selected' : ''}>A (80-89)</option>
+                                    <option value="B" ${grade.grade === 'B' ? 'selected' : ''}>B (70-79)</option>
+                                    <option value="C" ${grade.grade === 'C' ? 'selected' : ''}>C (60-69)</option>
+                                    <option value="D" ${grade.grade === 'D' ? 'selected' : ''}>D (50-59)</option>
+                                    <option value="F" ${grade.grade === 'F' ? 'selected' : ''}>F (0-49)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">${grade.date}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p class="text-muted">No grades found for this student in this course.</p>';
+            }
+            
+            modalBody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading grade data:', error);
+            document.getElementById('editModalBody').innerHTML = 
+                '<div class="alert alert-danger">Error loading grade data. Please try again.</div>';
+        });
+}
+</script>
+{% endblock %} 

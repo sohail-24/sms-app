@@ -1,0 +1,168 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Student:</strong> {{ student.full_name }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Student Information -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Student Information</h5>
+                <ul class="list-unstyled">
+                    <li><strong>ID:</strong> {{ student.student_id }}</li>
+                    <li><strong>Name:</strong> {{ student.full_name }}</li>
+                    <li><strong>Class:</strong> {{ student.current_class }}</li>
+                    <li><strong>Section:</strong> {{ student.section }}</li>
+                    <li><strong>Roll Number:</strong> {{ student.roll_number }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Performance -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Academic Performance</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Marks</th>
+                                <th>Grade</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in academic_results %}
+                            <tr>
+                                <td>{{ result.subject.name }}</td>
+                                <td>{{ result.marks_obtained }}/{{ result.total_marks }}</td>
+                                <td>{{ result.grade }}</td>
+                                <td>{{ result.remarks }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No academic results found for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Summary -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Attendance Summary</h5>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6>Total Days</h6>
+                        <h3>{{ attendance.total_days }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6>Present Days</h6>
+                        <h3>{{ attendance.present_days }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6>Absent Days</h6>
+                        <h3>{{ attendance.absent_days }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6>Attendance %</h6>
+                        <h3>{{ attendance.percentage }}%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Behavior Records -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Behavior Records</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Reported By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in behavior_records %}
+                    <tr>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.get_type_display }}</td>
+                        <td>{{ record.description }}</td>
+                        <td>{{ record.reported_by.get_full_name }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No behavior records found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher's Remarks -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Teacher's Remarks</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Remarks</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for remark in teacher_remarks %}
+                    <tr>
+                        <td>{{ remark.subject.name }}</td>
+                        <td>{{ remark.teacher.get_full_name }}</td>
+                        <td>{{ remark.remarks }}</td>
+                        <td>{{ remark.date }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No teacher remarks found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

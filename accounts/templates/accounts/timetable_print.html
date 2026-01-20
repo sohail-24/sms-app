@@ -1,0 +1,94 @@
+{% extends 'accounts/base_print.html' %}
+{% load custom_filters %}
+
+{% block title %}Timetable - {{ selected_class_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="text-center mb-4">
+        <h2>Class Timetable</h2>
+        <div class="text-muted">
+            <strong>Class:</strong> {{ selected_class_name }}
+            <span class="mx-3">|</span>
+            <strong>Schedule:</strong> {{ start_hour|stringformat:"02d" }}:00 - {{ end_hour|stringformat:"02d" }}:00
+            <span class="mx-3">|</span>
+            <strong>Duration:</strong> {{ slot_duration }} minutes
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 100px;">Time</th>
+                    {% for day in days %}
+                        <th class="text-center text-capitalize">{{ day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for time_slot in time_slots %}
+                    <tr>
+                        <td class="text-center align-middle">{{ time_slot }}</td>
+                        {% for day in days %}
+                            <td class="text-center align-middle">
+                                {% with schedule=schedule_dict|get_item:time_slot|get_item:day %}
+                                    {% if schedule %}
+                                        <div class="schedule-block">
+                                            <strong>{{ schedule.course.title }}</strong><br>
+                                            {% if schedule.course.teacher %}
+                                                {{ schedule.course.teacher.get_full_name }}<br>
+                                            {% endif %}
+                                            <small>Room: {{ schedule.room }}</small>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-center text-muted mt-4">
+        <small>Generated on {% now "F j, Y H:i" %}</small>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .container-fluid {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        table {
+            width: 100% !important;
+            margin: 0 !important;
+            font-size: 11px;
+        }
+        th, td {
+            padding: 4px !important;
+        }
+        .schedule-block {
+            margin: 0;
+            line-height: 1.2;
+        }
+        .schedule-block strong {
+            font-size: 11px;
+        }
+        .schedule-block small {
+            font-size: 9px;
+        }
+        @page {
+            size: landscape;
+            margin: 1cm;
+        }
+    }
+</style>
+{% endblock %} 

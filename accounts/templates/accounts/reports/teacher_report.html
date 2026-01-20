@@ -1,0 +1,166 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Teacher:</strong> {{ teacher.full_name }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Teacher Information -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Teacher Information</h5>
+                <ul class="list-unstyled">
+                    <li><strong>ID:</strong> {{ teacher.teacher_id }}</li>
+                    <li><strong>Name:</strong> {{ teacher.full_name }}</li>
+                    <li><strong>Department:</strong> {{ teacher.department }}</li>
+                    <li><strong>Subjects:</strong> {{ teacher.subjects.all|join:", " }}</li>
+                    <li><strong>Classes:</strong> {{ teacher.classes.all|join:", " }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teaching Hours Summary -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Teaching Hours Summary</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Total Hours</h6>
+                                <h3>{{ teaching_hours.total_hours }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Classes Taught</h6>
+                                <h3>{{ teaching_hours.classes_taught }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Average Hours/Day</h6>
+                                <h3>{{ teaching_hours.avg_hours_per_day }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Performance -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Subject Performance</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Class</th>
+                        <th>Average Score</th>
+                        <th>Pass Rate</th>
+                        <th>Top Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for performance in subject_performance %}
+                    <tr>
+                        <td>{{ performance.subject.name }}</td>
+                        <td>{{ performance.class_name }}</td>
+                        <td>{{ performance.average_score }}%</td>
+                        <td>{{ performance.pass_rate }}%</td>
+                        <td>{{ performance.top_score }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No subject performance data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Student Evaluations -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Student Evaluations</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Class</th>
+                        <th>Evaluation</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evaluation in student_evaluations %}
+                    <tr>
+                        <td>{{ evaluation.student.full_name }}</td>
+                        <td>{{ evaluation.subject.name }}</td>
+                        <td>{{ evaluation.class_name }}</td>
+                        <td>{{ evaluation.evaluation }}</td>
+                        <td>{{ evaluation.date }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No student evaluations found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Development -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Professional Development</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in professional_development %}
+                    <tr>
+                        <td>{{ activity.name }}</td>
+                        <td>{{ activity.date }}</td>
+                        <td>{{ activity.duration }}</td>
+                        <td>{{ activity.get_status_display }}</td>
+                        <td>{{ activity.remarks }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No professional development activities found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

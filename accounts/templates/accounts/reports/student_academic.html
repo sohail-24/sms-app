@@ -1,0 +1,160 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<li><strong>Student:</strong> {{ student.get_full_name }}</li>
+<li><strong>Report Type:</strong> {{ report_type }}</li>
+<li><strong>Period:</strong> {{ start_date }} to {{ end_date }}</li>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Student Information -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Student Information</h5>
+                <ul class="list-unstyled">
+                    <li><strong>ID:</strong> {{ student.student_id }}</li>
+                    <li><strong>Name:</strong> {{ student.get_full_name }}</li>
+                    <li><strong>Class:</strong> {{ student.class_section }}</li>
+                    <li><strong>Roll Number:</strong> {{ student.roll_number }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Summary -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Academic Summary</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Overall Average</h6>
+                                <h3>{{ overall_average }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Highest Score</h6>
+                                <h3>{{ highest_score }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Lowest Score</h6>
+                                <h3>{{ lowest_score }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Attendance</h6>
+                                <h3>{{ attendance_rate }}%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Performance -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Subject Performance</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Average Score</th>
+                        <th>Highest Score</th>
+                        <th>Lowest Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for performance in subject_performance %}
+                    <tr>
+                        <td>{{ performance.subject.title }}</td>
+                        <td>{{ performance.average }}%</td>
+                        <td>{{ performance.highest }}%</td>
+                        <td>{{ performance.lowest }}%</td>
+                        <td>
+                            {% if performance.average >= 90 %}
+                            <span class="badge bg-success">Excellent</span>
+                            {% elif performance.average >= 80 %}
+                            <span class="badge bg-primary">Very Good</span>
+                            {% elif performance.average >= 70 %}
+                            <span class="badge bg-info">Good</span>
+                            {% elif performance.average >= 60 %}
+                            <span class="badge bg-warning">Fair</span>
+                            {% else %}
+                            <span class="badge bg-danger">Needs Improvement</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No subject performance data found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Details -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Grade Details</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Grade</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for performance in subject_performance %}
+                        {% for grade in performance.grades %}
+                        <tr>
+                            <td>{{ grade.date|date:"Y-m-d" }}</td>
+                            <td>{{ grade.subject.title }}</td>
+                            <td>{{ grade.score }}%</td>
+                            <td>
+                                {% if grade.score >= 90 %}A
+                                {% elif grade.score >= 80 %}B
+                                {% elif grade.score >= 70 %}C
+                                {% elif grade.score >= 60 %}D
+                                {% else %}F
+                                {% endif %}
+                            </td>
+                            <td>{{ grade.remarks|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No grade records found for the selected period.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

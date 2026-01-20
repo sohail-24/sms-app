@@ -1,0 +1,212 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}{{ course.title }} - Course Details{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">{{ course.title }}</h2>
+                    <p class="text-muted mb-0">Course Code: {{ course.course_code }}</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'teacher_edit_course' course.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Course
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCourseModal">
+                        <i class="fas fa-trash me-2"></i>Delete Course
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Students</h6>
+                    <h2 class="card-title mb-0">{{ total_students }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Assignments</h6>
+                    <h2 class="card-title mb-0">{{ total_assignments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Exams</h6>
+                    <h2 class="card-title mb-0">{{ total_exams }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Attendance Rate</h6>
+                    <h2 class="card-title mb-0">{{ attendance_rate }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Details -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p>{{ course.description }}</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Class Section</h6>
+                            <p>{{ course.class_section.name }} - Section {{ course.class_section.section }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Credits</h6>
+                            <p>{{ course.credits }} Credits</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Exams</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_exams %}
+                    <div class="list-group list-group-flush">
+                        {% for exam in upcoming_exams %}
+                        <div class="list-group-item px-0">
+                            <h6 class="mb-1">{{ exam.title }}</h6>
+                            <p class="text-muted mb-0">{{ exam.date|date:"F d, Y" }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No upcoming exams</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Enrolled Students</h5>
+                        <button class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-2"></i>Add Student
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Attendance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ student.student_id }}</td>
+                                    <td>{{ student.first_name }} {{ student.last_name }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ attendance_rate }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'teacher_student_detail' student.id %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No students enrolled</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Course Modal -->
+<div class="modal fade" id="deleteCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the course "{{ course.title }}"? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="#">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Course</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+    }
+    .progress-bar {
+        background-color: #0d6efd;
+    }
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+</style>
+{% endblock %} 

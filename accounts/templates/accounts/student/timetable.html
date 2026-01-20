@@ -1,0 +1,320 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block extra_css %}
+<style>
+    .timetable-cell {
+        height: 100px;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        position: relative;
+    }
+    .timetable-cell.occupied {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    .class-block {
+        background-color: #fff;
+        border-radius: 5px;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .class-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .class-block .subject {
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    .class-block .teacher {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    .class-block .room {
+        font-size: 0.8rem;
+        color: #888;
+    }
+    .time-slot {
+        font-weight: 500;
+        color: #2c3e50;
+        padding: 10px;
+        background: #f8f9fa;
+        border-right: 2px solid #dee2e6;
+    }
+    .day-header {
+        font-weight: 600;
+        color: #2c3e50;
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .form-check-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .timetable-controls {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .current-settings {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 10px;
+    }
+    @keyframes fadeInScale {
+        0% {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    .timetable-cell.newly-added {
+        background-color: rgba(46, 204, 113, 0.1) !important;
+        transition: background-color 0.3s ease;
+    }
+    .btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    .alert-success {
+        border-left: 4px solid #28a745;
+    }
+    .alert-success i {
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Timetable Summary (no upcoming events card) -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="current-settings mb-3">
+                <i class="fas fa-clock text-primary"></i>
+                Current schedule: {{ start_hour|stringformat:"02d" }}:00 - {{ end_hour|stringformat:"02d" }}:00
+                ({{ slot_duration }} min slots, {{ time_slots|length }} periods)
+                <br>
+                <i class="fas fa-calendar-alt text-success"></i>
+                Total scheduled classes: <span id="scheduleCount">{{ timetable|length }}</span>
+            </div>
+        </div>
+        <!-- Removed Upcoming Events card here -->
+    </div>
+    <!-- Weekly Timetable -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Weekly Schedule</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" id="prevWeek">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="currentWeek">
+                            Current Week
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="nextWeek">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th class="time-slot">Time</th>
+                                    {% for day in days %}
+                                    <th class="day-header">{{ day|title }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in timetable_data %}
+                                <tr>
+                                    <td class="time-slot">{{ row.time_slot.display }}</td>
+                                    {% for cell in row.cells %}
+                                    <td class="timetable-cell {% if cell.occupied %}occupied{% endif %}" data-day="{{ cell.day }}" data-time="{{ row.time_slot.start }}-{{ row.time_slot.end }}">
+                                        {% if cell.schedule %}
+                                        <div class="class-block" data-schedule-id="{{ cell.schedule.id }}">
+                                            <div class="subject">{{ cell.schedule.course.title }}</div>
+                                            <div class="teacher">{{ cell.schedule.course.teacher.get_full_name }}</div>
+                                            <div class="room">{{ cell.schedule.room }}</div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Today's Schedule and Upcoming Events (already present) -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Calendar</h5>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Events</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for event in upcoming_events %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <small class="text-muted">{{ event.start_date|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-1">{{ event.description|truncatewords:10 }}</p>
+                            <small class="text-muted">
+                                <span class="color-dot me-1" style="background-color: {{ event.color }};"></span>
+                                {{ event.get_event_type_display }}
+                            </small>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-muted">No upcoming events.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    height: 100%;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 7px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const prevWeekBtn = document.getElementById('prevWeek');
+    const nextWeekBtn = document.getElementById('nextWeek');
+    const currentWeekBtn = document.getElementById('currentWeek');
+    
+    let currentDate = new Date();
+    
+    function updateTimetable(date) {
+        // This function would make an AJAX call to fetch the timetable for the selected week
+        fetch(`{% url 'student_timetable_data' %}?date=${date.toISOString()}`)
+            .then(response => response.json())
+            .then(data => {
+                // Update the timetable with the new data
+                // This is a placeholder for the actual implementation
+                console.log('Timetable updated:', data);
+            })
+            .catch(error => {
+                console.error('Error fetching timetable:', error);
+            });
+    }
+    
+    prevWeekBtn.addEventListener('click', function() {
+        currentDate.setDate(currentDate.getDate() - 7);
+        updateTimetable(currentDate);
+    });
+    
+    nextWeekBtn.addEventListener('click', function() {
+        currentDate.setDate(currentDate.getDate() + 7);
+        updateTimetable(currentDate);
+    });
+    
+    currentWeekBtn.addEventListener('click', function() {
+        currentDate = new Date();
+        updateTimetable(currentDate);
+    });
+
+    var calendarEl = document.getElementById('calendar');
+    if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            },
+            events: '/calendar/events/', // Adjust this URL if needed
+            eventColor: '#3498db',
+            eventDisplay: 'block',
+            height: 600,
+            eventDidMount: function(info) {
+                if (info.event.extendedProps.color) {
+                    info.el.style.backgroundColor = info.event.extendedProps.color;
+                }
+            }
+        });
+        calendar.render();
+    }
+});
+</script>
+{% endblock %} 

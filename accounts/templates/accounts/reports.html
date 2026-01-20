@@ -1,0 +1,502 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Reports - School Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        transition: transform 0.3s ease;
+    }
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+    .report-icon {
+        font-size: 2rem;
+        color: #3498db;
+        margin-bottom: 1rem;
+    }
+    .stat-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .report-modal .modal-dialog {
+        max-width: 800px;
+    }
+    .report-filters {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mt-4">Reports</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Reports</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Report Types -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card report-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-graduate report-icon"></i>
+                    <h5 class="card-title">Student Reports</h5>
+                    <p class="card-text">View academic performance, attendance, and behavior reports.</p>
+                    <button class="btn btn-primary" onclick="showReport('student')">
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card report-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chalkboard-teacher report-icon"></i>
+                    <h5 class="card-title">Teacher Reports</h5>
+                    <p class="card-text">View teaching hours, subject performance, and evaluations.</p>
+                    <button class="btn btn-primary" onclick="showReport('teacher')">
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card report-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line report-icon"></i>
+                    <h5 class="card-title">Academic Reports</h5>
+                    <p class="card-text">View class performance, exam results, and grade analysis.</p>
+                    <button class="btn btn-primary" onclick="showReport('academic')">
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card report-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill-wave report-icon"></i>
+                    <h5 class="card-title">Financial Reports</h5>
+                    <p class="card-text">View fee collection, expenses, and financial summaries.</p>
+                    <button class="btn btn-primary" onclick="showReport('financial')">
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generation Modals -->
+    <!-- Student Report Modal -->
+    <div class="modal fade report-modal" id="studentReportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Student Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="studentReportForm" method="POST" action="{% url 'generate_student_report' %}">
+                        {% csrf_token %}
+                        <div class="report-filters">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Student</label>
+                                    <select name="student" class="form-select" required>
+                                        <option value="">Select Student</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}">{{ student.get_full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Report Type</label>
+                                    <select name="report_type" class="form-select" required>
+                                        <option value="academic">Academic Performance</option>
+                                        <option value="attendance">Attendance</option>
+                                        <option value="behavior">Behavior</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" name="end_date" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Report Modal -->
+    <div class="modal fade report-modal" id="teacherReportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Teacher Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="teacherReportForm" method="POST" action="{% url 'generate_teacher_report' %}">
+                        {% csrf_token %}
+                        <div class="report-filters">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Teacher</label>
+                                    <select name="teacher" class="form-select" required>
+                                        <option value="">Select Teacher</option>
+                                        {% for teacher in teachers %}
+                                        <option value="{{ teacher.id }}">{{ teacher.get_full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Report Type</label>
+                                    <select name="report_type" class="form-select" required>
+                                        <option value="teaching">Teaching Hours</option>
+                                        <option value="performance">Subject Performance</option>
+                                        <option value="evaluation">Student Evaluations</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" name="end_date" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Report Modal -->
+    <div class="modal fade report-modal" id="academicReportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Academic Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="academicReportForm" method="POST" action="{% url 'generate_academic_report' %}">
+                        {% csrf_token %}
+                        <div class="report-filters">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Class</label>
+                                    <select name="class" class="form-select" required>
+                                        <option value="">Select Class</option>
+                                        {% for class in classes %}
+                                        <option value="{{ class.id }}">{{ class.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Report Type</label>
+                                    <select name="report_type" class="form-select" required>
+                                        <option value="performance">Class Performance</option>
+                                        <option value="exam">Exam Results</option>
+                                        <option value="grade">Grade Analysis</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" name="end_date" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Report Modal -->
+    <div class="modal fade report-modal" id="financialReportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Financial Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="financialReportForm" method="POST" action="{% url 'generate_financial_report' %}">
+                        {% csrf_token %}
+                        <div class="report-filters">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Report Type</label>
+                                    <select name="report_type" class="form-select" required>
+                                        <option value="fees">Fee Collection</option>
+                                        <option value="expenses">Expenses</option>
+                                        <option value="summary">Financial Summary</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Department</label>
+                                    <select name="department" class="form-select">
+                                        <option value="">All Departments</option>
+                                        {% for dept in departments %}
+                                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" name="end_date" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Content -->
+    <div id="reportContent">
+        <!-- Student Performance Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <div class="stat-number">{{ average_attendance }}%</div>
+                        <div class="stat-label">Average Attendance</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <div class="stat-number">{{ average_grade }}%</div>
+                        <div class="stat-label">Average Grade</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <div class="stat-number">{{ pass_rate }}%</div>
+                        <div class="stat-label">Pass Rate</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <div class="stat-number">{{ total_students }}</div>
+                        <div class="stat-label">Total Students</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Grade Distribution</h5>
+                        <div class="chart-container">
+                            <canvas id="gradeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Subject Performance</h5>
+                        <div class="chart-container">
+                            <canvas id="subjectChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all report modals
+    window.reportModals = {
+        student: new bootstrap.Modal(document.getElementById('studentReportModal')),
+        teacher: new bootstrap.Modal(document.getElementById('teacherReportModal')),
+        academic: new bootstrap.Modal(document.getElementById('academicReportModal')),
+        financial: new bootstrap.Modal(document.getElementById('financialReportModal'))
+    };
+
+    // Initialize charts
+    initializeCharts();
+
+    // Set default dates in all forms
+    setDefaultDates();
+});
+
+function showReport(type) {
+    // Show the appropriate modal
+    window.reportModals[type].show();
+}
+
+function initializeCharts() {
+    // Grade Distribution Chart
+    const gradeCtx = document.getElementById('gradeChart').getContext('2d');
+    
+    // Get real grade distribution data
+    const gradeData = {{ grade_distribution_json|safe }};
+    const gradeLabels = gradeData.map(item => item.grade);
+    const gradeCounts = gradeData.map(item => item.count);
+    
+    new Chart(gradeCtx, {
+        type: 'bar',
+        data: {
+            labels: gradeLabels,
+            datasets: [{
+                label: 'Number of Students',
+                data: gradeCounts,
+                backgroundColor: [
+                    '#2ecc71',
+                    '#3498db',
+                    '#f1c40f',
+                    '#e67e22',
+                    '#e74c3c'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Subject Performance Chart
+    const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+    
+    // Get real subject performance data
+    const subjectData = {{ subject_performance_json|safe }};
+    const subjectLabels = subjectData.map(item => item.subject);
+    const subjectScores = subjectData.map(item => item.average_score);
+    
+    new Chart(subjectCtx, {
+        type: 'radar',
+        data: {
+            labels: subjectLabels,
+            datasets: [{
+                label: 'Average Score',
+                data: subjectScores,
+                fill: true,
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: '#3498db',
+                pointBackgroundColor: '#3498db',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#3498db'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: {
+                line: {
+                    borderWidth: 3
+                }
+            }
+        }
+    });
+}
+
+function setDefaultDates() {
+    // Set default dates (current month) in all date inputs
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach((input, index) => {
+        if (index % 2 === 0) {
+            input.value = firstDay.toISOString().split('T')[0];
+        } else {
+            input.value = lastDay.toISOString().split('T')[0];
+        }
+    });
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,469 @@
+{% extends 'accounts/base_print.html' %}
+{% load static %}
+
+{% block title %}School Management System — User Manual{% endblock %}
+
+{% block extra_css %}
+<style>
+    .brand-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .brand-header img { height: 48px; width: auto; }
+    .brand-title { margin: 0; font-size: 20px; font-weight: 700; }
+    .brand-sub { margin: 0; color: #6c757d; font-size: 12px; }
+
+    h2 { font-size: 18px; margin-top: 24px; border-bottom: 2px solid #0d6efd; padding-bottom: 6px; }
+    h3 { font-size: 15px; margin-top: 18px; }
+    p { margin: 6px 0 10px; }
+    ul { margin: 0 0 10px 18px; }
+    .kbd { padding: 2px 6px; background: #f1f3f5; border: 1px solid #dee2e6; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+    .muted { color: #6c757d; }
+
+    /* Page breaks for PDF */
+    .page-break { page-break-before: always; }
+    @media print { a[href]::after { content: ""; } }
+
+    /* Table of Contents with page numbers (via paged.js target-counter) */
+    ul.toc { list-style: none; padding-left: 0; margin-left: 0; }
+    ul.toc li { margin: 6px 0; }
+    ul.toc li a { color: inherit; text-decoration: none; display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: baseline; width: 100%; }
+    ul.toc li a::after { content: leader('.') ' ' target-counter(attr(href), page); text-align: right; }
+
+    /* Screenshot placeholders */
+    figure.screenshot { margin: 10px 0 14px; page-break-inside: avoid; }
+    figure.screenshot figcaption { font-size: 12px; color: #6c757d; margin-top: 6px; }
+    .manual-screenshot { width: 100%; border: 1px solid #dee2e6; border-radius: 6px; }
+    .screenshot-ph { height: 240px; border: 2px dashed #adb5bd; border-radius: 6px; color: #868e96; background: repeating-linear-gradient(45deg, #f8f9fa, #f8f9fa 12px, #ffffff 12px, #ffffff 24px); display: flex; align-items: center; justify-content: center; font-size: 14px; text-transform: uppercase; letter-spacing: .5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="brand-header">
+    <img src="{% static 'accounts/images/ST_logo1.png' %}" alt="School Logo"/>
+    <div>
+        <h1 class="brand-title">School Management System </h1>
+        <h2 class="brand-title" align="center">User Manual</h2>
+        <p class="brand-sub" align="center">For Administrators, Teachers, and Students</p>
+    </div>
+    <div class="ms-auto text-end">
+        <span class="muted">Printed: {{ now|date:'Y-m-d H:i' }}</span>
+    </div>
+    </div>
+
+<p class="muted">This document describes how to use the modules available in the system: Dashboard, Students, Teachers, Courses, Assignments, Examinations, Attendance, Timetable, Calendar, Finance, Communication, and Reports.</p>
+
+<h2>Table of Contents</h2>
+<ul class="toc">
+	<li><a href="#quick-start">Quick Start by Role</a></li>
+	<li><a href="#auth">Authentication and Accounts</a></li>
+	<li><a href="#students">Students</a></li>
+	<li><a href="#teachers">Teachers</a></li>
+	<li><a href="#courses">Courses</a></li>
+	<li><a href="#assignments">Assignments & Materials</a></li>
+	<li><a href="#exams">Examinations & Grades</a></li>
+	<li><a href="#attendance">Attendance</a></li>
+	<li><a href="#timetable">Timetable & Schedules</a></li>
+	<li><a href="#calendar">Calendar & Events</a></li>
+	<li><a href="#finance">Finance (Invoices, Payments, Expenses)</a></li>
+	<li><a href="#communication">Communication (Announcements, Messages)</a></li>
+	<li><a href="#reports">Reports</a></li>
+	<li><a href="#settings">Settings & Administration</a></li>
+	<li><a href="#data-media">Data & Media Guidelines</a></li>
+	<li><a href="#shortcuts">Keyboard Shortcuts</a></li>
+	<li><a href="#troubleshooting">Troubleshooting & FAQs</a></li>
+</ul>
+
+<h2 id="access">Access and Roles</h2>
+<ul>
+    <li><strong>Admin</strong>: Full access to all modules and settings</li>
+    <li><strong>Teacher</strong>: Courses, students, grades, materials, attendance, communication</li>
+    <li><strong>Student</strong>: Dashboard, courses, materials, assignments, notices, fees, results</li>
+    <li><strong>Supported browsers</strong>: Chrome, Edge, Firefox, Safari</li>
+    <li><strong>Password rules</strong>: Min 8 chars, include uppercase, lowercase, number</li>
+</ul>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2 id="quick-start">Quick Start by Role</h2>
+<h3>Admin</h3>
+<ol>
+	<li>Create departments and classes in Settings.</li>
+	<li>Add teachers and students (ensure unique IDs and emails).</li>
+	<li>Create courses and assign teachers.</li>
+	<li>Set up schedules/timetable; verify no conflicts.</li>
+	<li>Share login info and support materials with staff/students.</li>
+</ol>
+<h3>Teacher</h3>
+<ol>
+	<li>Open Teacher Dashboard → check assigned courses.</li>
+	<li>Upload course materials; create assignments if needed.</li>
+	<li>Take attendance from Attendance → Take.</li>
+	<li>Create exams and later enter grades.</li>
+	<li>Use Messages/Announcements to communicate with students.</li>
+</ol>
+<h3>Student</h3>
+<ol>
+	<li>Open Student Dashboard.</li>
+	<li>View Courses → materials, assignments, exams.</li>
+	<li>Submit assignments before due time.</li>
+	<li>Check Fees to view dues and receipts.</li>
+	<li>See Timetable and Notices regularly.</li>
+</ol>
+
+<h2 id="auth">Authentication and Accounts</h2>
+<ul>
+    <li>Login with email/username and password</li>
+    <li>Forgot password: use the link on the login page and follow the email verification</li>
+    <li>Profile: update personal info, photo, and password from your dashboard</li>
+</ul>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2 id="students">Students</h2>
+<h3>Add</h3>
+<ul>
+    <li>Students → Add Student</li>
+    <li>Enter unique <strong>Student ID</strong>, personal and academic details; upload optional photo (≤ 5MB)</li>
+</ul>
+<h3>Field Reference</h3>
+<ul>
+	<li><strong>Student ID</strong>: up to 20 chars; unique (e.g., STD001).</li>
+	<li><strong>First/Last Name</strong>: letters and spaces only.</li>
+	<li><strong>Date of Birth</strong>: required; calendar picker.</li>
+	<li><strong>Gender</strong>: Male/Female/Other.</li>
+	<li><strong>Email</strong>: must be unique; used for login/notifications.</li>
+	<li><strong>Phone</strong>: + and 10–12 digits.</li>
+	<li><strong>Grade Level</strong>, <strong>Admission Date</strong>: required.</li>
+	<li><strong>Guardian</strong> fields: name, relation, phone (required), email (optional).</li>
+</ul>
+<h3>View/Edit</h3>
+<ul>
+    <li>Open a student → View Details → Edit → Save</li>
+    <li>Unique and format validations apply (email, phone, dates)</li>
+</ul>
+<h3>Attendance & Fees</h3>
+<ul>
+    <li>Attendance shows daily status (Present/Absent/Late/Excused)</li>
+    <li>Fees shows dues and payments; receipts and invoices can be printed</li>
+</ul>
+
+<div class="page-break"></div>
+<br>
+<br>
+<h2 id="teachers">Teachers</h2>
+<h3>Add</h3>
+<ul>
+    <li>Teachers → Add Teacher</li>
+    <li>Enter unique <strong>Teacher ID</strong>, personal details, department/subjects, joining date</li>
+</ul>
+<h3>Field Reference</h3>
+<ul>
+	<li><strong>Teacher ID</strong>: unique (e.g., TCH001). Letters/numbers/"-"/"_"; min 3 chars.</li>
+	<li><strong>Email</strong>: unique.</li>
+	<li><strong>Phone</strong>: optional; up to 17 digits (may include +).</li>
+	<li><strong>Date of Birth/Gender</strong>: optional but recommended.</li>
+	<li><strong>Department</strong>: free text or use your department codes.</li>
+	<li><strong>Qualification</strong> & <strong>Address</strong>: optional.</li>
+	<li><strong>Joining Date</strong>: required (used in reports).</li>
+</ul>
+<h3>View/Edit</h3>
+<ul>
+    <li>Teacher Details → Edit → Save Changes</li>
+    <li>Photo cropper available; select image → crop → "Crop & Apply" → Save Changes</li>
+    <li>Optional password change requires current password and strength rules</li>
+</ul>
+
+<h2 id="courses">Courses</h2>
+<ul>
+    <li>Create with unique <strong>Course Code</strong>, title, description, teacher, credits</li>
+    <li>Materials: upload PDFs/notes; Assignments: create tasks with due dates</li>
+    <li>Enrolled students and activity counts visible on course pages</li>
+</ul>
+<h3>How to Create a Course</h3>
+<ol>
+	<li>Courses → Add Course</li>
+	<li>Enter <strong>Course Code</strong> (e.g., MTH101) and <strong>Title</strong>.</li>
+	<li>Select <strong>Teacher</strong>; set <strong>Credits</strong>.</li>
+	<li>Save → Course appears in list and can be used in schedules/exams.</li>
+</ol>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2 id="assignments">Assignments & Materials</h2>
+<ul>
+    <li><strong>Teachers</strong>: create assignments, manage submissions, upload materials</li>
+    <li><strong>Students</strong>: view assignments and submit files online</li>
+</ul>
+<h3>Create Assignment</h3>
+<ol>
+	<li>Teacher → Assignments → Create</li>
+	<li>Enter title, description, due date/time; attach optional reference file</li>
+	<li>Save → Students see it under Assignments</li>
+</ol>
+
+<h3>Grade Submissions</h3>
+<ol>
+	<li>Teacher → Assignments → Submissions</li>
+	<li>Open a submission → view/download file → enter grade/remarks</li>
+	<li>Save → Student sees feedback instantly</li>
+</ol>
+
+<h2 id="exams">Examinations & Grades</h2>
+<ul>
+    <li>Create exams with type/date/duration/marks; optional instructions</li>
+    <li>Schedule sessions (room, supervisor, start/end); conflicts are validated</li>
+    <li>Enter grades and remarks per student</li>
+    </ul>
+<h3>Create Exam</h3>
+<ol>
+	<li>Teacher/Admin → Exams → Create</li>
+	<li>Pick Course and Exam Type (midterm/final/quiz/assignment)</li>
+	<li>Set Date/Duration/Total Marks; add Instructions (optional)</li>
+	<li>Save</li>
+</ol>
+<h3>Schedule Exam Session</h3>
+<ol>
+	<li>Open the exam → Add Schedule</li>
+	<li>Set Room, Supervisor, Start and End time</li>
+	<li>Save → system checks conflicts for room and supervisor</li>
+</ol>
+<h3>Enter Grades</h3>
+<ol>
+	<li>Teacher → Grades → select course/exam</li>
+	<li>Enter score/grade and optional remarks for each student</li>
+	<li>Save → Grades appear in student views and reports</li>
+</ol>
+
+<div class="page-break"></div>
+
+<h2 id="attendance">Attendance</h2>
+<ul>
+    <li>Teachers: mark attendance by course and date</li>
+    <li>One record per student/course/day; duplicates are blocked</li>
+    <li>History views and filters available</li>
+    </ul>
+<h3>Take Attendance</h3>
+<ol>
+	<li>Teacher → Attendance → Select Course & Date</li>
+	<li>Mark each student: Present/Absent/Late/Excused</li>
+	<li>Add remarks if needed → Save</li>
+</ol>
+<h3>Attendance Constraints</h3>
+<ul>
+	<li>Unique combination: student + course + date</li>
+	<li>Editing a past record updates audit dates</li>
+</ul>
+
+<h2 id="timetable">Timetable & Schedules</h2>
+<ul>
+    <li>Weekly timetable for teachers/students</li>
+    <li>Create/edit class schedules with day, time range, room</li>
+    <li>Validations: end after start, no overlapping rooms or teacher times</li>
+    </ul>
+<h3>Create Schedule Entry</h3>
+<ol>
+	<li>Admin/Teacher → Timetable/Schedule → Add</li>
+	<li>Choose Course, Day, Start Time, End Time, Room</li>
+	<li>Save → conflicts are checked automatically</li>
+</ol>
+<h3>Export Timetable</h3>
+<ul>
+	<li>Use on‑page Export buttons to download PDF or Excel</li>
+	<li>Optional: filter by class/section and time window</li>
+</ul>
+
+<h2 id="calendar">Calendar & Events</h2>
+<ul>
+    <li>Add events with category and color (academic, exam, holiday, etc.)</li>
+    <li>All‑day or timed events; printable views supported</li>
+    </ul>
+<h3>Recommended Colors</h3>
+<ul>
+	<li>Academic: Blue</li>
+	<li>Exams: Red</li>
+	<li>Holidays: Green</li>
+	<li>Meetings: Yellow</li>
+	<li>Sports: Purple</li>
+	<li>Cultural: Orange</li>
+</ul>
+<br>
+<br>
+<br>
+<br>
+<h2 id="finance">Finance</h2>
+<ul>
+    <li>Invoices: amount and due date; status updates when paid</li>
+    <li>Payments: amount/method/date; unique transaction ID; printable receipts</li>
+    <li>Expenses: title, amount, type, department, date; optional receipt upload</li>
+    </ul>
+<h3>Create Invoice</h3>
+<ol>
+	<li>Finance → Invoices → Create</li>
+	<li>Select Student, Amount, Due Date → Save</li>
+	<li>Open invoice to Print or Delete</li>
+</ol>
+<h3>Record Payment</h3>
+<ol>
+	<li>Finance → Fee Payment → Add Payment</li>
+	<li>Enter Amount, Payment Method, Date/Time, Transaction ID</li>
+	<li>Save → Print Receipt if required</li>
+</ol>
+<h3>Record Expense</h3>
+<ol>
+	<li>Finance → Expenses → Add</li>
+	<li>Title, Amount, Type, Department (optional), Date</li>
+	<li>Attach receipt image/PDF (optional) → Save</li>
+</ol>
+
+<h2 id="communication">Communication</h2>
+<ul>
+    <li>Announcements per course with optional attachments and expiry</li>
+    <li>Direct messages between users with attachments</li>
+    </ul>
+<h3>Compose Message</h3>
+<ol>
+	<li>Messages → Compose</li>
+	<li>Select recipient(s), subject, content; add attachment (optional)</li>
+	<li>Send → recipients are notified in their inbox</li>
+</ol>
+<h3>Create Announcement</h3>
+<ol>
+	<li>Announcements → Create</li>
+	<li>Pick Course and Category; enter Title and Content</li>
+	<li>Set Expiry (optional) → Save</li>
+</ol>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h2 id="reports">Reports</h2>
+<ul>
+    <li>Academic performance, attendance, financial summaries, teacher evaluations</li>
+    <li>Use on‑screen Print to export to PDF</li>
+    </ul>
+<h3>Generating Reports</h3>
+<ol>
+	<li>Reports → choose report type (Student/Teacher/Academic/Financial)</li>
+	<li>Select filters (date ranges, classes, courses, students)</li>
+	<li>Generate → Print for PDF export</li>
+</ol>
+
+<h2 id="settings">Settings & Administration</h2>
+<ul>
+	<li><strong>Departments</strong>: name/code; used in expenses and teacher info.</li>
+	<li><strong>Classes/Sections</strong>: used to organize students and courses.</li>
+	<li><strong>System Settings</strong>: key/value entries referenced across features.</li>
+</ul>
+
+<h2 id="data-media">Data & Media Guidelines</h2>
+<ul>
+	<li>Images: JPG/PNG/GIF; ≤ 5MB recommended for profile photos.</li>
+	<li>Documents: Prefer PDF for reliability.</li>
+	<li>Filenames: avoid spaces and special characters; use dashes/underscores.</li>
+	<li>Backups: schedule periodic DB and media backups per your IT policy.</li>
+</ul>
+
+<h2 id="shortcuts">Keyboard Shortcuts</h2>
+<ul>
+	<li><span class="kbd">Ctrl</span> + <span class="kbd">P</span>: Print/Save PDF</li>
+	<li><span class="kbd">Tab</span>/<span class="kbd">Shift</span> + <span class="kbd">Tab</span>: Navigate form fields</li>
+	<li><span class="kbd">Enter</span>: Submit focused forms/buttons</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+    <li><strong>Cannot save edits</strong>: check duplicate IDs/emails and required fields</li>
+    <li><strong>Image upload fails</strong>: reduce size (≤ 5MB) and use JPG/PNG</li>
+    <li><strong>Schedule won’t save</strong>: resolve overlapping room/teacher times</li>
+    <li><strong>Attendance exists</strong>: record already present for that day</li>
+    </ul>
+
+<h2>FAQs</h2>
+<ul>
+	<li><strong>Can I change IDs later?</strong> Yes, but must remain unique.</li>
+	<li><strong>How do I reset a password?</strong> Use Forgot Password or ask an admin.</li>
+	<li><strong>How to export data?</strong> Use built‑in Print/Export buttons or Excel exports where available.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>Screenshot Placeholders</h2>
+<!-- <p class="muted">Replace these boxes with actual screenshots by swapping the placeholder <code>div</code> with an <code>&lt;img class="manual-screenshot" src="..." alt="..." /&gt;</code> pointing to your uploaded image under <code>static/</code>.</p> -->
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/login.png' %}" alt="Login Page">
+	<figcaption>Login screen</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/admin.png' %}" alt="admin Page">
+	<figcaption>Admin dashboard screen.</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/st_form.png' %}" alt="add student form">
+	<figcaption>Add/Edit Student form.</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/t_edit.png' %}" alt="edit teacher form">
+	<figcaption>Teacher edit modal.</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/courses.png' %}" alt="courses">
+	<figcaption>Course details</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/exam.png' %}" alt="courses">
+	<figcaption>Exam setup with schedule</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/attendance.png' %}" alt="courses">
+	<figcaption>Attendance marking screen</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/timetable.png' %}" alt="timetable">
+	<figcaption>Weekly timetable</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/fee_payment.png' %}" alt="feepayment">
+	<figcaption>Invoice details and payment receipt print views.</figcaption>
+</figure>
+
+<figure class="screenshot">
+	<img class="manual-screenshot" src="{% static 'accounts/images/manual/announcements.png' %}" alt="courses">
+	<figcaption>Announcements</figcaption>
+</figure>
+
+<!-- <p class="muted">Tip: Use <span class="kbd">Ctrl</span> + <span class="kbd">P</span> (or <span class="kbd">Cmd</span> + <span class="kbd">P</span>) to save this manual as a PDF with branding.</p> -->
+
+{% endblock %}
+
+

@@ -1,0 +1,119 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Fee Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Fee Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted mb-2">Total Fee</h6>
+                                <h3 class="mb-0">${{ total_fee }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted mb-2">Paid Amount</h6>
+                                <h3 class="text-success mb-0">${{ paid_amount }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted mb-2">Due Amount</h6>
+                                <h3 class="text-danger mb-0">${{ due_amount }}</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if pending_fee %}
+                    <div class="alert alert-warning mt-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Pending Payment Due</h6>
+                                <p class="mb-0">Next payment of ${{ pending_fee.amount }} is due by {{ pending_fee.due_date|date:"F d, Y" }}</p>
+                                <small class="text-muted">Created: {{ pending_fee.created_at|date:"M d, Y H:i" }}</small>
+                                {% if pending_fee.updated_at and pending_fee.updated_at > pending_fee.created_at %}<br>
+                                    <small class="text-muted">Updated: {{ pending_fee.updated_at|date:"M d, Y H:i" }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Payment History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payment History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payment_history %}
+                                <tr>
+                                    <td>{{ payment.transaction_id }}</td>
+                                    <td>
+                                        {{ payment.date|date:"M d, Y" }}<br>
+                                        <small class="text-muted">Created: {{ payment.created_at|date:"M d, Y H:i" }}</small>
+                                        {% if payment.updated_at and payment.updated_at > payment.created_at %}<br>
+                                            <small class="text-muted">Updated: {{ payment.updated_at|date:"M d, Y H:i" }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.description }}</td>
+                                    <td>${{ payment.amount }}</td>
+                                    <td>
+                                        <span class="badge {% if payment.status == 'SUCCESS' %}bg-success{% elif payment.status == 'PENDING' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ payment.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if payment.can_download_receipt %}
+                                        <a href="{% url 'student_download_receipt' %}?payment_id={{ payment.id }}" class="btn btn-sm btn-outline-primary" title="Download Receipt">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No payment history available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %} 

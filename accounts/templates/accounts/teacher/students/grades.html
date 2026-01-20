@@ -1,0 +1,516 @@
+{% extends 'accounts/base_teacher.html' %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">{{ student.get_full_name }} - Academic Performance</h4>
+                            <small class="text-muted">Student ID: {{ student.student_id }}</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'teacher_student_detail' student.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Student Details
+                            </a>
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addGradeModal">
+                                <i class="fas fa-plus"></i> Add Grade
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Statistics -->
+    {% if courses %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
+                    <h4>{{ overall_percentage|floatformat:1 }}%</h4>
+                    <small class="text-muted">Overall Performance</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                    <h4>{{ total_subjects }}</h4>
+                    <small class="text-muted">Subjects</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-star fa-2x text-info mb-2"></i>
+                    <h4>{{ highest_grade }}</h4>
+                    <small class="text-muted">Highest Grade</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-graduation-cap fa-2x text-primary mb-2"></i>
+                    <h4>{{ average_score|floatformat:1 }}</h4>
+                    <small class="text-muted">Average Score</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center my-4">
+        <h5>No courses found for this student with you as teacher.</h5>
+        <p class="mb-0">Grades and statistics will appear here once the student is enrolled in your courses.</p>
+    </div>
+    {% endif %}
+
+    <!-- Course-wise Grades Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="get" class="form-inline">
+                <label for="courseFilter" class="form-label me-2">Filter by Course:</label>
+                <select name="course" id="courseFilter" class="form-select me-2" onchange="this.form.submit()">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if selected_course and selected_course.id == course.id %}selected{% endif %}>{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+                {% if selected_course %}
+                    <a href="?" class="btn btn-link">Reset</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Course-wise Grades Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Performance Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if grades_summary and grades_summary|length > 0 and courses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Total Score</th>
+                                        <th>Max Score</th>
+                                        <th>Percentage</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for summary in grades_summary %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ summary.course.title }}</strong><br>
+                                            <small class="text-muted">{{ summary.course.course_code }}</small>
+                                        </td>
+                                        <td>{{ summary.total_score }}</td>
+                                        <td>{{ summary.max_score }}</td>
+                                        <td>{{ summary.percentage|floatformat:1 }}%</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if summary.percentage >= 70 %}bg-success{% elif summary.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ summary.percentage }}%" 
+                                                     aria-valuenow="{{ summary.percentage }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ summary.percentage|floatformat:0 }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No grades recorded yet for the selected course(s).</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Grade Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Detailed Grade Records</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="filterGrades('all')">All</button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="filterGrades('A')">A Grades</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="filterGrades('B')">B Grades</button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="filterGrades('C')">C Grades</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="filterGrades('F')">F Grades</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if all_grades and all_grades|length > 0 and courses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="gradesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Subject</th>
+                                        <th>Score</th>
+                                        <th>Grade</th>
+                                        <th>Remarks</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grade in all_grades %}
+                                    <tr data-grade="{{ grade.grade }}">
+                                        <td>
+                                            <span class="fw-bold">{{ grade.date|date:"M d, Y" }}</span>
+                                            {% if grade.examination %}
+                                                <br><small class="text-muted">{{ grade.examination.exam_type|title }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ grade.subject.title }}</strong>
+                                            {% if grade.subject.course_code %}
+                                                <br><small class="text-muted">{{ grade.subject.course_code }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-{% if grade.score >= 90 %}success{% elif grade.score >= 80 %}primary{% elif grade.score >= 70 %}warning{% elif grade.score >= 60 %}secondary{% else %}danger{% endif %} fs-6">
+                                                {{ grade.score }}
+                                            </span>
+                                            {% if grade.examination %}
+                                                <br><small class="text-muted">/ {{ grade.examination.total_marks }}</small>
+                                            {% else %}
+                                                <br><small class="text-muted">/ 100</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if grade.grade %}
+                                                <span class="badge bg-{% if grade.grade == 'A+' or grade.grade == 'A' %}success{% elif grade.grade == 'B' %}primary{% elif grade.grade == 'C' %}warning{% else %}danger{% endif %} fs-5">
+                                                    {{ grade.grade }}
+                                                </span>
+                                            {% else %}
+                                                {% if grade.score >= 90 %}
+                                                    <span class="badge bg-success fs-5">A</span>
+                                                {% elif grade.score >= 80 %}
+                                                    <span class="badge bg-primary fs-5">B</span>
+                                                {% elif grade.score >= 70 %}
+                                                    <span class="badge bg-warning fs-5">C</span>
+                                                {% elif grade.score >= 60 %}
+                                                    <span class="badge bg-secondary fs-5">D</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger fs-5">F</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if grade.remarks %}
+                                                <span class="text-dark">{{ grade.remarks }}</span>
+                                            {% else %}
+                                                <span class="text-muted fst-italic">No remarks</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editGradeModal"
+                                                        data-grade-id="{{ grade.id }}"
+                                                        data-subject="{{ grade.subject.title|escapejs }}"
+                                                        data-score="{{ grade.score }}"
+                                                        data-grade="{% if grade.grade %}{{ grade.grade }}{% else %}{{ grade.calculated_grade }}{% endif %}"
+                                                        data-remarks="{{ grade.remarks|default:""|escapejs }}"
+                                                        data-date="{{ grade.date|date:'Y-m-d' }}"
+                                                        onclick="loadGradeData(this)" 
+                                                        title="Edit Grade">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteGradeModal"
+                                                        data-grade-id="{{ grade.id }}"
+                                                        data-subject="{{ grade.subject.title|escapejs }}"
+                                                        data-score="{{ grade.score }}"
+                                                        data-grade="{% if grade.grade %}{{ grade.grade }}{% else %}{{ grade.calculated_grade }}{% endif %}"
+                                                        data-date="{{ grade.date|date:'M d, Y' }}"
+                                                        onclick="loadDeleteGradeData(this)"
+                                                        title="Delete Grade">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No grade records found for the selected course(s).</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Grade Modal -->
+<div class="modal fade" id="addGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Grade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'teacher_update_grades' 0 student.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select class="form-select" name="subject" required>
+                            <option value="">Select Subject</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.title }} ({{ course.course_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="score" class="form-label">Score</label>
+                        <input type="number" class="form-control" name="score" min="0" max="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="grade" class="form-label">Grade</label>
+                        <select class="form-select" name="grade" required>
+                            <option value="">Select Grade</option>
+                            <option value="A+">A+ (90-100)</option>
+                            <option value="A">A (80-89)</option>
+                            <option value="B">B (70-79)</option>
+                            <option value="C">C (60-69)</option>
+                            <option value="D">D (50-59)</option>
+                            <option value="F">F (0-49)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea class="form-control" name="remarks" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Grade Modal -->
+<div class="modal fade" id="editGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Grade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="editGradeForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="grade_id" id="edit_grade_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="edit_subject" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_score" class="form-label">Score</label>
+                        <input type="number" class="form-control" name="score" id="edit_score" min="0" max="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_grade" class="form-label">Grade</label>
+                        <select class="form-select" name="grade" id="edit_grade" required>
+                            <option value="">Select Grade</option>
+                            <option value="A+">A+ (90-100)</option>
+                            <option value="A">A (80-89)</option>
+                            <option value="B">B (70-79)</option>
+                            <option value="C">C (60-69)</option>
+                            <option value="D">D (50-59)</option>
+                            <option value="F">F (0-49)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_remarks" class="form-label">Remarks</label>
+                        <textarea class="form-control" name="remarks" id="edit_remarks" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date" id="edit_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Grade Confirmation Modal -->
+<div class="modal fade" id="deleteGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirm Grade Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. The grade record will be permanently deleted.
+                </div>
+                
+                <p class="mb-3">Are you sure you want to delete the following grade record?</p>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <strong>Student:</strong><br>
+                                <span class="text-muted">{{ student.get_full_name }}</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <strong>Subject:</strong><br>
+                                <span class="text-muted" id="delete_subject_display">-</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong>Score:</strong><br>
+                                <span class="text-muted" id="delete_score_display">-</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <strong>Grade:</strong><br>
+                                <span class="text-muted" id="delete_grade_display">-</span>
+                            </div>
+                            <div class="col-sm-4">
+                                <strong>Date:</strong><br>
+                                <span class="text-muted" id="delete_date_display">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Cancel
+                </button>
+                <form method="post" action="" id="deleteGradeForm" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Yes, Delete Grade
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterGrades(grade) {
+    const table = document.getElementById('gradesTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowGrade = row.getAttribute('data-grade');
+        
+        if (grade === 'all' || rowGrade.includes(grade)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+    
+    // Update button states
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function loadGradeData(button) {
+    // Get data from button's data attributes
+    const gradeId = button.getAttribute('data-grade-id');
+    const subject = button.getAttribute('data-subject');
+    const score = button.getAttribute('data-score');
+    const grade = button.getAttribute('data-grade');
+    const remarks = button.getAttribute('data-remarks');
+    const date = button.getAttribute('data-date');
+    
+    // Populate the edit modal with current grade data
+    document.getElementById('edit_grade_id').value = gradeId;
+    document.getElementById('edit_subject').value = subject;
+    document.getElementById('edit_score').value = score;
+    document.getElementById('edit_grade').value = grade;
+    document.getElementById('edit_remarks').value = remarks;
+    document.getElementById('edit_date').value = date;
+    
+    // Set the form action URL for editing
+    const form = document.getElementById('editGradeForm');
+    form.action = `{% url 'teacher_edit_grade' 0 student.id %}`.replace('0', gradeId);
+}
+
+function loadDeleteGradeData(button) {
+    // Get data from button's data attributes
+    const gradeId = button.getAttribute('data-grade-id');
+    const subject = button.getAttribute('data-subject');
+    const score = button.getAttribute('data-score');
+    const grade = button.getAttribute('data-grade');
+    const date = button.getAttribute('data-date');
+    
+    // Populate the delete modal with grade information
+    document.getElementById('delete_subject_display').textContent = subject;
+    document.getElementById('delete_score_display').textContent = score;
+    document.getElementById('delete_grade_display').textContent = grade;
+    document.getElementById('delete_date_display').textContent = date;
+    
+    // Set the form action URL for deletion
+    const form = document.getElementById('deleteGradeForm');
+    form.action = `{% url 'teacher_delete_grade' 0 student.id %}`.replace('0', gradeId);
+}
+
+// Set default active button
+document.addEventListener('DOMContentLoaded', function() {
+    const firstButton = document.querySelector('.btn-group .btn');
+    if (firstButton) {
+        firstButton.classList.add('active');
+    }
+});
+</script>
+{% endblock %} 

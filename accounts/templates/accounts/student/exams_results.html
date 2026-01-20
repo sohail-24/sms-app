@@ -1,0 +1,210 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Upcoming Exams Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upcoming Examinations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Exam Type</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Duration</th>
+                                    <th>Venue</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exam in upcoming_exams %}
+                                <tr>
+                                    <td>{{ exam.course.title }}</td>
+                                    <td>{{ exam.exam_type }}</td>
+                                    <td>{{ exam.date|date:"M d, Y" }}</td>
+                                    <td>{{ exam.start_time }}</td>
+                                    <td>{{ exam.duration }} minutes</td>
+                                    <td>{{ exam.venue }}</td>
+                                    <td>
+                                        {% if exam.is_registered %}
+                                            <span class="badge bg-success">Registered</span>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-primary" onclick="registerExam({{ exam.id }})">Register</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No upcoming examinations scheduled.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Results Section -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Examination Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Exam Type</th>
+                                    <th>Date</th>
+                                    <th>Marks Obtained</th>
+                                    <th>Total Marks</th>
+                                    <th>Grade</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in exam_results %}
+                                <tr>
+                                    <td>{{ result.exam.course.title }}</td>
+                                    <td>{{ result.exam.exam_type }}</td>
+                                    <td>{{ result.exam.date|date:"M d, Y" }}</td>
+                                    <td>{{ result.marks_obtained }}</td>
+                                    <td>{{ result.total_marks }}</td>
+                                    <td>
+                                        <span class="badge {% if result.grade == 'A' %}bg-success{% elif result.grade == 'B' %}bg-primary{% elif result.grade == 'C' %}bg-info{% elif result.grade == 'D' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ result.grade }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if result.is_pass %}
+                                            <span class="badge bg-success">Pass</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Fail</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No examination results available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart"></canvas>
+                    <hr>
+                    <div class="mt-4">
+                        <h6>Summary</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Average Grade:</span>
+                            <strong>{{ average_grade }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Exams:</span>
+                            <strong>{{ total_exams }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Pass Rate:</span>
+                            <strong>{{ pass_rate }}%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Performance Chart
+    var ctx = document.getElementById('performanceChart').getContext('2d');
+    var performanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['A', 'B', 'C', 'D', 'F'],
+            datasets: [{
+                label: 'Grade Distribution',
+                data: [
+                    {{ grade_a_count }},
+                    {{ grade_b_count }},
+                    {{ grade_c_count }},
+                    {{ grade_d_count }},
+                    {{ grade_f_count }}
+                ],
+                backgroundColor: [
+                    '#28a745',
+                    '#007bff',
+                    '#17a2b8',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Exam Registration Function
+    function registerExam(examId) {
+        if (confirm('Are you sure you want to register for this exam?')) {
+            fetch(`{% url 'student_register_exam' %}${examId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while registering for the exam.');
+            });
+        }
+    }
+</script>
+{% endblock %} 

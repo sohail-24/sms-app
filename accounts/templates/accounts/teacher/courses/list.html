@@ -1,0 +1,267 @@
+{% extends 'accounts/base_teacher.html' %}
+{% load static %}
+
+{% block title_content %}My Courses{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>My Courses</h2>
+                <div>
+                    <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                        <i class="fas fa-plus me-2"></i>Add New Class
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                        <i class="fas fa-plus me-2"></i>Add New Course
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for course in courses %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ course.title }}</h5>
+                        <span class="badge bg-primary">{{ course.course_code }}</span>
+                    </div>
+                    <p class="card-text text-muted">{{ course.description|truncatewords:20 }}</p>
+                    
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Class:</strong> {{ course.class_section.name }}</p>
+                        <p class="mb-1"><strong>Credits:</strong> {{ course.credits }}</p>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-info">
+                                <i class="fas fa-users me-1"></i> {{ course.students.count }} Students
+                            </span>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{% url 'teacher_course_detail' course.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'teacher_edit_course' course.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'teacher_delete_course' course.id %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-md-12">
+            <div class="text-center py-5">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <h4>No Courses Found</h4>
+                <p class="text-muted">You haven't created any courses yet.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                    <i class="fas fa-plus me-2"></i>Add New Course
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div class="modal fade" id="addCourseModal" tabindex="-1" aria-labelledby="addCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCourseModalLabel">Add New Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addCourseForm" method="POST" action="{% url 'teacher_create_course' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="course_code" class="form-label">Course Code</label>
+                        <input type="text" class="form-control" id="course_code" name="course_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Course Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credits" class="form-label">Credits</label>
+                        <input type="number" class="form-control" id="credits" name="credits" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="class_section" class="form-label">Class Section</label>
+                        <select class="form-select" id="class_section" name="class_section" required>
+                            <option value="">Select Class Section</option>
+                            {% for class in classes %}
+                            <option value="{{ class.id }}">{{ class.name }} - Section {{ class.section }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClassModalLabel">Add New Class</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addClassForm" method="POST" action="{% url 'teacher_create_class' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Class Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div class="form-text">Example: Class 10, Grade 11, etc.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="section" class="form-label">Section</label>
+                        <input type="text" class="form-control" id="section" name="section" required>
+                        <div class="form-text">Example: A, B, C, etc.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="academic_year" class="form-label">Academic Year</label>
+                        <input type="text" class="form-control" id="academic_year" name="academic_year" required>
+                        <div class="form-text">Example: 2024-2025</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addCourseForm = document.getElementById('addCourseForm');
+    const addClassForm = document.getElementById('addClassForm');
+    
+    // Get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    
+    addCourseForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error creating course. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating course. Please try again.');
+        });
+    });
+
+    addClassForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log('Class form submitted');
+        
+        const formData = new FormData(this);
+        console.log('Form data:', {
+            name: formData.get('name'),
+            section: formData.get('section'),
+            academic_year: formData.get('academic_year')
+        });
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error creating class. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating class. Please try again.');
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    .progress-bar {
+        background-color: var(--primary-color);
+    }
+</style>
+{% endblock %} 

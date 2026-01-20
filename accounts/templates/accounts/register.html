@@ -1,0 +1,925 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - School Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .background-slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .background-slideshow img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            animation: fadeInOut 16s infinite;
+        }
+
+        .background-slideshow img:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .background-slideshow img:nth-child(2) {
+            animation-delay: 4s;
+        }
+
+        .background-slideshow img:nth-child(3) {
+            animation-delay: 8s;
+        }
+
+        .background-slideshow img:nth-child(4) {
+            animation-delay: 12s;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%);
+            z-index: -1;
+        }
+
+        .register-container {
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.8s ease-out;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 85vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(52, 152, 219, 0.5) rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom scrollbar styles for webkit browsers */
+        .register-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .register-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .register-container::-webkit-scrollbar-thumb {
+            background-color: rgba(52, 152, 219, 0.5);
+            border-radius: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .register-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(52, 152, 219, 0.8);
+        }
+
+        /* Ensure the container is centered vertically with padding */
+        .container.d-flex {
+            padding: 30px 0;
+            min-height: 100vh;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .register-header h2 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 2.2rem;
+        }
+
+        .register-header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .register-header i {
+            font-size: 2.5rem;
+            color: #3498db;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .form-control {
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .input-group-text {
+            background-color: transparent;
+            border: 2px solid #e0e0e0;
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+            padding: 0 20px;
+        }
+
+        .input-group-text i {
+            color: #3498db;
+            font-size: 1.2rem;
+        }
+
+        .btn-register {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            border: none;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-register:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-register:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-register i {
+            margin-right: 10px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .login-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .login-link a:hover {
+            color: #2980b9;
+        }
+
+        .login-link a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #3498db;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .login-link a:hover::after {
+            transform: scaleX(1);
+        }
+
+        .alert {
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease-out;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .password-requirements {
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .requirement i {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .requirement.valid i {
+            color: #2ecc71;
+        }
+
+        .requirement.invalid i {
+            color: #e74c3c;
+        }
+
+        .floating-decoration {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .decoration-1 {
+            top: -50px;
+            left: -50px;
+            animation-delay: 0s;
+        }
+
+        .decoration-2 {
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 2s;
+        }
+
+        /* Add styles for registration tabs */
+        .nav-pills {
+            gap: 10px;
+            margin-bottom: 25px !important;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #2c3e50;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-slideshow">
+        <img src="{% static 'accounts/images/school1.jpg' %}" alt="School Image 1">
+        <img src="{% static 'accounts/images/school2.jpg' %}" alt="School Image 2">
+        <img src="{% static 'accounts/images/school3.jpg' %}" alt="School Image 3">
+        <img src="{% static 'accounts/images/school4.jpg' %}" alt="School Image 4">
+    </div>
+    <div class="overlay"></div>
+
+    <div class="container d-flex align-items-center justify-content-center" style="height: 100vh;">
+        <div class="register-container">
+            <div class="floating-decoration decoration-1"></div>
+            <div class="floating-decoration decoration-2"></div>
+
+            <div class="register-header">
+                <i class="fas fa-user-plus"></i>
+                <h2>Create Account</h2>
+                <p>Join our school management system</p>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <ul class="nav nav-pills mb-4 justify-content-center" id="registerTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="student-tab" data-bs-toggle="pill" data-bs-target="#student" type="button" role="tab">
+                        <i class="fas fa-user-graduate"></i> Student
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="teacher-tab" data-bs-toggle="pill" data-bs-target="#teacher" type="button" role="tab">
+                        <i class="fas fa-chalkboard-teacher"></i> Teacher
+                    </button>
+                </li>
+                <!-- <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin" type="button" role="tab">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </button>
+                </li> -->
+            </ul>
+
+            <div class="tab-content" id="registerTabsContent">
+                <!-- Student Registration Form -->
+                <div class="tab-pane fade show active" id="student" role="tabpanel">
+                    <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="student">
+                        
+                        <!-- Personal Information -->
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label">Student ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="text" class="form-control" id="student_id" name="student_id" placeholder="Enter your student ID" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First name" required oninput="validateAlphaOnly(this, 'firstNameError')">
+                                </div>
+                                <div id="firstNameError" style="display:none; margin-top:5px;"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last name" required oninput="validateAlphaOnly(this, 'lastNameError')">
+                                </div>
+                                <div id="lastNameError" style="display:none; margin-top:5px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-venus-mars"></i></span>
+                                    <select class="form-control" id="gender" name="gender" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="M">Male</option>
+                                        <option value="F">Female</option>
+                                        <option value="O">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required oninput="validateEmailOnly(this, 'emailError')">
+                            </div>
+                            <div id="emailError" style="display:none; margin-top:5px;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Enter your phone number" inputmode="tel" pattern="^(\+91[0-9]{10}|[0-9]{10})$" maxlength="13" minlength="10" oninput="validatePhoneInput(this)">
+                            </div>
+                            <small class="form-text text-muted">Only Numbers Are Allowed.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-home"></i></span>
+                                <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter your address"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Academic Information -->
+                        <div class="mb-3">
+                            <label for="grade_level" class="form-label">Grade Level</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
+                                <input type="text" class="form-control" id="grade_level" name="grade_level" placeholder="Enter your grade level">
+                            </div>
+                        </div>
+
+                        <!-- Guardian Information -->
+                        <div class="mb-3">
+                            <label for="guardian_name" class="form-label">Guardian Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
+                                <input type="text" class="form-control" id="guardian_name" name="guardian_name" placeholder="Enter guardian name" oninput="validateAlphaOnly(this, 'guardianNameError')">
+                            </div>
+                            <div id="guardianNameError" style="display:none; margin-top:5px;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="guardian_relation" class="form-label">Guardian Relation</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-users"></i></span>
+                                <input type="text" class="form-control" id="guardian_relation" name="guardian_relation" placeholder="Enter guardian relation" oninput="validateAlphaOnly(this, 'guardianRelationError')">
+                            </div>
+                            <div id="guardianRelationError" style="display:none; margin-top:5px;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="guardian_phone" class="form-label">Guardian Phone</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input type="tel" class="form-control" id="guardian_phone" name="guardian_phone" placeholder="Enter guardian phone number" inputmode="tel" pattern="^(\+91[0-9]{10}|[0-9]{10})$" maxlength="13" minlength="10" oninput="validatePhoneInput(this)">
+                            </div>
+                            <small class="form-text text-muted">Only Numbers are allowed</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="guardian_email" class="form-label">Guardian Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="guardian_email" name="guardian_email" placeholder="Enter guardian email">
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label for="password1" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password1" name="password1" placeholder="Enter your password" required>
+                            </div>
+                            <div id="passwordRequirements" class="password-requirements mt-2">
+                                <small class="form-text text-muted">Password must contain:</small>
+                                <ul class="list-unstyled mt-1" style="font-size: 0.875rem;">
+                                    <li id="length-req"><i class="fas fa-times text-danger me-2"></i>At least 8 characters</li>
+                                    <li id="uppercase-req"><i class="fas fa-times text-danger me-2"></i>One uppercase letter (A-Z)</li>
+                                    <li id="lowercase-req"><i class="fas fa-times text-danger me-2"></i>One lowercase letter (a-z)</li>
+                                    <li id="number-req"><i class="fas fa-times text-danger me-2"></i>One number (0-9)</li>
+                                    <li id="special-req"><i class="fas fa-times text-danger me-2"></i>One special character (!@#$%^&*(),.?":{}|<>)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password2" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm your password" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-register">
+                            <i class="fas fa-user-plus"></i> Register as Student
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Teacher Registration Form -->
+                <div class="tab-pane fade" id="teacher" role="tabpanel">
+                    <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="teacher">
+                        
+                        <!-- Personal Information -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name_teacher" class="form-label">First Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="first_name_teacher" name="first_name" placeholder="First name" required oninput="validateAlphaOnly(this, 'firstNameError')">
+                                </div>
+                                <div id="firstNameError" style="display:none; margin-top:5px;"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name_teacher" class="form-label">Last Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="last_name_teacher" name="last_name" placeholder="Last name" required oninput="validateAlphaOnly(this, 'lastNameError')">
+                                </div>
+                                <div id="lastNameError" style="display:none; margin-top:5px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Teacher ID -->
+                        <div class="mb-3">
+                            <label for="teacher_id" class="form-label">Teacher ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="text" class="form-control" id="teacher_id" name="teacher_id" placeholder="Enter your teacher ID" required>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="mb-3">
+                            <label for="email_teacher" class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email_teacher" name="email" placeholder="Enter your email" required oninput="validateEmailOnly(this, 'emailTeacherError')">
+                            </div>
+                            <div id="emailTeacherError" style="display:none; margin-top:5px;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone_number_teacher" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input type="tel" class="form-control" id="phone_number_teacher" name="phone_number" placeholder="Enter your phone number" inputmode="tel" pattern="^(\+91[0-9]{10}|[0-9]{10})$" maxlength="13" minlength="10" oninput="validatePhoneInput(this)">
+                            </div>
+                            <small class="form-text text-muted">Only Numbers Are Allowed.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address_teacher" class="form-label">Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-home"></i></span>
+                                <textarea class="form-control" id="address_teacher" name="address" rows="3" placeholder="Enter your address"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Professional Information -->
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                <input type="text" class="form-control" id="department" name="department" placeholder="Enter your department" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subjects" class="form-label">Subjects</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-book"></i></span>
+                                <input type="text" class="form-control" id="subjects" name="subjects" placeholder="Enter subjects (comma-separated)" required>
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label for="password1_teacher" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password1_teacher" name="password1" placeholder="Enter your password" required>
+                            </div>
+                            <div id="passwordRequirementsTeacher" class="password-requirements mt-2">
+                                <small class="form-text text-muted">Password must contain:</small>
+                                <ul class="list-unstyled mt-1" style="font-size: 0.875rem;">
+                                    <li id="length-req-teacher"><i class="fas fa-times text-danger me-2"></i>At least 8 characters</li>
+                                    <li id="uppercase-req-teacher"><i class="fas fa-times text-danger me-2"></i>One uppercase letter (A-Z)</li>
+                                    <li id="lowercase-req-teacher"><i class="fas fa-times text-danger me-2"></i>One lowercase letter (a-z)</li>
+                                    <li id="number-req-teacher"><i class="fas fa-times text-danger me-2"></i>One number (0-9)</li>
+                                    <li id="special-req-teacher"><i class="fas fa-times text-danger me-2"></i>One special character (!@#$%^&*(),.?":{}|<>)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password2_teacher" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password2_teacher" name="password2" placeholder="Confirm your password" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-register">
+                            <i class="fas fa-user-plus"></i> Register as Teacher
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Admin Registration Form -->
+                <div class="tab-pane fade" id="admin" role="tabpanel">
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="admin">
+                        <div class="mb-3">
+                            <label for="username_admin" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username_admin" name="username" placeholder="Enter your username" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_admin" class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email_admin" name="email" placeholder="Enter your email" required oninput="validateEmailOnly(this, 'emailAdminError')">
+                            </div>
+                            <div id="emailAdminError" style="display:none; margin-top:5px;"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password1_admin" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password1_admin" name="password1" placeholder="Enter your password" required>
+                            </div>
+                            <div id="passwordRequirementsAdmin" class="password-requirements mt-2">
+                                <small class="form-text text-muted">Password must contain:</small>
+                                <ul class="list-unstyled mt-1" style="font-size: 0.875rem;">
+                                    <li id="length-req-admin"><i class="fas fa-times text-danger me-2"></i>At least 8 characters</li>
+                                    <li id="uppercase-req-admin"><i class="fas fa-times text-danger me-2"></i>One uppercase letter (A-Z)</li>
+                                    <li id="lowercase-req-admin"><i class="fas fa-times text-danger me-2"></i>One lowercase letter (a-z)</li>
+                                    <li id="number-req-admin"><i class="fas fa-times text-danger me-2"></i>One number (0-9)</li>
+                                    <li id="special-req-admin"><i class="fas fa-times text-danger me-2"></i>One special character (!@#$%^&*(),.?":{}|<>)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password2_admin" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password2_admin" name="password2" placeholder="Confirm your password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-register">
+                            <i class="fas fa-user-plus"></i> Register as Admin
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="login-link">
+                Already have an account? <a href="{% url 'login' %}">Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add animation to form elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const formElements = document.querySelectorAll('.form-control');
+            formElements.forEach((element, index) => {
+                element.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Password validation
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+            passwordInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validatePassword(this);
+                });
+            });
+
+            function validatePassword(input) {
+                const password = input.value;
+                const form = input.closest('form');
+                const submitBtn = form.querySelector('button[type="submit"]');
+                
+                // Determine which form we're in
+                let suffix = '';
+                if (input.id.includes('teacher')) {
+                    suffix = '-teacher';
+                } else if (input.id.includes('admin')) {
+                    suffix = '-admin';
+                }
+                
+                const requirements = {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+                };
+
+                // Update visual indicators for each requirement
+                updateRequirement('length-req' + suffix, requirements.length);
+                updateRequirement('uppercase-req' + suffix, requirements.uppercase);
+                updateRequirement('lowercase-req' + suffix, requirements.lowercase);
+                updateRequirement('number-req' + suffix, requirements.number);
+                updateRequirement('special-req' + suffix, requirements.special);
+
+                const isValid = Object.values(requirements).every(req => req);
+                submitBtn.disabled = !isValid;
+
+                // Add visual feedback to input
+                input.classList.toggle('is-valid', isValid);
+                input.classList.toggle('is-invalid', !isValid);
+            }
+
+            function updateRequirement(elementId, isValid) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    const icon = element.querySelector('i');
+                    if (isValid) {
+                        icon.className = 'fas fa-check text-success me-2';
+                        element.style.color = '#28a745';
+                    } else {
+                        icon.className = 'fas fa-times text-danger me-2';
+                        element.style.color = '#dc3545';
+                    }
+                }
+            }
+
+            // Form submission validation
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const password1 = form.querySelector('input[name="password1"]');
+                    const password2 = form.querySelector('input[name="password2"]');
+
+                    if (password1.value !== password2.value) {
+                        e.preventDefault();
+                        alert('Passwords do not match!');
+                        return;
+                    }
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentForm = document.querySelector('#student form');
+            const teacherForm = document.querySelector('#teacher form');
+
+            // Name validation function
+            function validateName(name) {
+                return /^[a-zA-Z\s]*$/.test(name);
+            }
+
+            // Email validation function
+            function validateEmail(email) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+
+            // Function to show popup message
+            function showPopup(input, message) {
+                // Remove any existing popup
+                const existingPopup = input.parentElement.querySelector('.validation-popup');
+                if (existingPopup) {
+                    existingPopup.remove();
+                }
+
+                // Create and show new popup
+                const popup = document.createElement('div');
+                popup.className = 'validation-popup';
+                popup.style.cssText = `
+                    position: absolute;
+                    background-color: #ff4444;
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    margin-top: 5px;
+                    z-index: 1000;
+                `;
+                popup.textContent = message;
+                input.parentElement.style.position = 'relative';
+                input.parentElement.appendChild(popup);
+            }
+
+            // Function to add validation to form inputs
+            function addValidationToForm(form) {
+                const firstNameInput = form.querySelector('input[name="first_name"]');
+                const lastNameInput = form.querySelector('input[name="last_name"]');
+                const emailInput = form.querySelector('input[name="email"]');
+
+                // Email validation removed (now uses validateEmailOnly function for external validation)
+
+                // Form submission validation
+                form.addEventListener('submit', function(e) {
+                    let hasError = false;
+                    
+                    if (!validateName(firstNameInput.value) || !validateName(lastNameInput.value)) {
+                        e.preventDefault();
+                        alert('First name and last name must contain only characters');
+                        hasError = true;
+                    }
+                    
+                    if (!validateEmail(emailInput.value)) {
+                        e.preventDefault();
+                        alert('Please enter a valid email address');
+                        hasError = true;
+                    }
+                });
+            }
+
+            // Add validation to both student and teacher forms
+            if (studentForm) {
+                addValidationToForm(studentForm);
+            }
+            if (teacherForm) {
+                addValidationToForm(teacherForm);
+            }
+        });
+
+        function validatePhoneInput(input) {
+            let value = input.value;
+            // Allow only numbers and '+' at the start
+            if (value.length === 1 && value !== '+') {
+                value = value.replace(/[^\d]/g, '');
+            } else if (value.startsWith('+')) {
+                // Only allow '+91' at the start
+                if (!value.startsWith('+91')) {
+                    value = '+' + value.replace(/[^\d]/g, '').slice(0, 2);
+                } else {
+                    value = '+91' + value.slice(3).replace(/[^\d]/g, '').slice(0, 10);
+                }
+            } else {
+                value = value.replace(/[^\d]/g, '').slice(0, 10);
+            }
+            // Enforce length: +91XXXXXXXXXX (13 chars) or XXXXXXXXXX (10 chars)
+            if (value.startsWith('+91')) {
+                value = value.slice(0, 13);
+            } else if (value.startsWith('+')) {
+                value = value.slice(0, 3); // Only allow '+91'
+            } else {
+                value = value.slice(0, 10);
+            }
+            input.value = value;
+        }
+
+        function validateAlphaOnly(input, errorId) {
+            const value = input.value;
+            const regex = /^[a-zA-Z\s]*$/;
+            const errorDiv = document.getElementById(errorId);
+            if (!regex.test(value)) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '<div style="background:#ff4444;color:#fff;padding:10px 18px;border-radius:8px;font-size:1rem;">Name should contain only characters</div>';
+                input.classList.add('is-invalid');
+            } else {
+                errorDiv.style.display = 'none';
+                errorDiv.innerHTML = '';
+                input.classList.remove('is-invalid');
+            }
+        }
+
+        function validateEmailOnly(input, errorId) {
+            const value = input.value;
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const errorDiv = document.getElementById(errorId);
+            if (value && !regex.test(value)) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '<div style="background:#ff4444;color:#fff;padding:10px 18px;border-radius:8px;font-size:1rem;">Please enter a valid email address</div>';
+                input.classList.add('is-invalid');
+            } else {
+                errorDiv.style.display = 'none';
+                errorDiv.innerHTML = '';
+                input.classList.remove('is-invalid');
+            }
+        }
+    </script>
+</body>
+</html> 

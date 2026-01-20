@@ -1,0 +1,46 @@
+# Django Framework
+Django==4.2.1
+gunicorn
+psycopg2-binary
+python-dateutil
+
+# Database (SQLite comes with Python, but for other databases)
+# For PostgreSQL: psycopg2-binary==2.9.6
+# For MySQL: mysqlclient==2.1.1
+
+# Excel/Spreadsheet libraries
+openpyxl==3.1.2
+xlsxwriter==3.1.2
+
+# PDF generation
+reportlab==4.0.4
+
+# Image processing (if needed for photos)
+Pillow==10.0.0
+
+# Additional Django utilities
+django-extensions==3.2.3
+
+# For production deployment
+gunicorn==20.1.0
+whitenoise==6.5.0
+
+# For development
+python-dotenv==1.0.0
+
+
+#pip install -r requirements.txt
+# python manage.py migrate
+# python manage.py update_admin_credentials
+# python manage.py runserver
+
+# for windows :
+# Simply double-click the setup.bat file
+# OR run in Command Prompt/PowerShell:
+# setup.bat
+
+# For macOS/Linux:
+# In Terminal:
+# chmod +x setup.sh
+# ./setup.sh
+

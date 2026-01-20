@@ -1,0 +1,174 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<div class="mb-4">
+    <h5 class="text-muted">Teacher: {{ teacher.get_full_name }}</h5>
+    <h5 class="text-muted">Report Type: {{ report_type }}</h5>
+</div>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Evaluation Summary -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Student Evaluations Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Student</th>
+                                <th>Rating</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for evaluation in evaluations %}
+                            <tr>
+                                <td>{{ evaluation.date|date:"M d, Y" }}</td>
+                                <td>{{ evaluation.course.title }}</td>
+                                <td>{{ evaluation.student.get_full_name }}</td>
+                                <td>
+                                    {{ evaluation.get_rating_display }}
+                                    {% if evaluation.rating >= 4 %}
+                                        <span class="badge bg-success">Excellent</span>
+                                    {% elif evaluation.rating == 3 %}
+                                        <span class="badge bg-info">Good</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ evaluation.comments|default:"No comments" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No evaluations available for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluation Statistics -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Rating Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ratingDistributionChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Course-wise Ratings</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="courseRatingsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the serialized evaluations data
+    const evaluations = {{ evaluations_json|safe }};
+    const ratingCounts = {
+        'Excellent': 0,
+        'Very Good': 0,
+        'Good': 0,
+        'Fair': 0,
+        'Poor': 0
+    };
+    
+    evaluations.forEach(eval => {
+        ratingCounts[eval.get_rating_display]++;
+    });
+
+    // Rating Distribution Chart
+    new Chart(document.getElementById('ratingDistributionChart'), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(ratingCounts),
+            datasets: [{
+                data: Object.values(ratingCounts),
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.8)',
+                    'rgba(52, 152, 219, 0.8)',
+                    'rgba(241, 196, 15, 0.8)',
+                    'rgba(230, 126, 34, 0.8)',
+                    'rgba(231, 76, 60, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Prepare data for Course-wise Ratings Chart
+    const courseRatings = {};
+    evaluations.forEach(eval => {
+        if (!courseRatings[eval.course.title]) {
+            courseRatings[eval.course.title] = {
+                total: 0,
+                count: 0
+            };
+        }
+        courseRatings[eval.course.title].total += eval.rating;
+        courseRatings[eval.course.title].count++;
+    });
+
+    const courseLabels = Object.keys(courseRatings);
+    const averageRatings = courseLabels.map(course => 
+        courseRatings[course].total / courseRatings[course].count
+    );
+
+    // Course-wise Ratings Chart
+    new Chart(document.getElementById('courseRatingsChart'), {
+        type: 'bar',
+        data: {
+            labels: courseLabels,
+            datasets: [{
+                label: 'Average Rating',
+                data: averageRatings,
+                backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

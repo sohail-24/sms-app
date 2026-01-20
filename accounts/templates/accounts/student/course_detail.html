@@ -1,0 +1,252 @@
+{% extends 'accounts/base_student.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">{{ course.title }}</h4>
+                            <small class="text-muted">{{ course.course_code }}</small>
+                        </div>
+                        <a href="{% url 'student_courses' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Courses
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Course Description</h6>
+                            <p>{{ course.description }}</p>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <strong>Teacher:</strong> {{ course.teacher.get_full_name }}<br>
+                                    <strong>Credits:</strong> {{ course.credits }}<br>
+                                    <strong>Department:</strong> {{ course.teacher.department }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Enrolled Students:</strong> {{ course.get_enrolled_student_count }}<br>
+                                    <strong>Class Section:</strong> {{ course.class_section.full_name|default:"Not specified" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>Your Progress</h6>
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar progress-bar-striped" role="progressbar" 
+                                         style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+                                        50%
+                                    </div>
+                                </div>
+                                <small class="text-muted">Course Completion</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="courseTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements" type="button" role="tab">
+                                <i class="fas fa-bullhorn"></i> Announcements
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignments" type="button" role="tab">
+                                <i class="fas fa-tasks"></i> Assignments
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="exams-tab" data-bs-toggle="tab" data-bs-target="#exams" type="button" role="tab">
+                                <i class="fas fa-calendar-check"></i> Exams
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="materials-tab" data-bs-toggle="tab" data-bs-target="#materials" type="button" role="tab">
+                                <i class="fas fa-file-alt"></i> Course Materials
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="courseTabContent">
+                        <!-- Announcements Tab -->
+                        <div class="tab-pane fade show active" id="announcements" role="tabpanel">
+                            {% if course_announcements %}
+                                {% for announcement in course_announcements %}
+                                <div class="alert alert-info">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ announcement.title }}</h6>
+                                        <small class="text-muted">{{ announcement.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                    <p class="mb-0 mt-2">{{ announcement.content }}</p>
+                                    <small class="text-muted">Posted by: {{ announcement.created_by.get_full_name }}</small>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-bullhorn fa-3x mb-3"></i>
+                                    <p>No announcements for this course yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Assignments Tab -->
+                        <div class="tab-pane fade" id="assignments" role="tabpanel">
+                            {% if course_assignments %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Assignment</th>
+                                                <th>Type</th>
+                                                <th>Due Date</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for assignment in course_assignments %}
+                                            <tr>
+                                                <td>{{ assignment.title }}</td>
+                                                <td>
+                                                    <span class="badge badge-primary">{{ assignment.get_activity_type_display }}</span>
+                                                </td>
+                                                <td>{{ assignment.due_date|date:"M d, Y H:i" }}</td>
+                                                <td>
+                                                    {% if assignment.due_date > today %}
+                                                        <span class="badge badge-warning">Pending</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">Overdue</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'student_assignment_detail' assignment.id %}" class="btn btn-sm btn-primary">
+                                                        View Details
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-tasks fa-3x mb-3"></i>
+                                    <p>No assignments for this course yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Exams Tab -->
+                        <div class="tab-pane fade" id="exams" role="tabpanel">
+                            {% if course_exams %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Exam</th>
+                                                <th>Type</th>
+                                                <th>Date</th>
+                                                <th>Duration</th>
+                                                <th>Total Marks</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for exam in course_exams %}
+                                            <tr>
+                                                <td>{{ exam.title|default:exam.get_exam_type_display }}</td>
+                                                <td>
+                                                    <span class="badge badge-info">{{ exam.get_exam_type_display }}</span>
+                                                </td>
+                                                <td>{{ exam.date|date:"M d, Y H:i" }}</td>
+                                                <td>{{ exam.duration }}</td>
+                                                <td>{{ exam.total_marks }}</td>
+                                                <td>
+                                                    {% if exam.date > today %}
+                                                        <span class="badge badge-success">Upcoming</span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">Completed</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-calendar-check fa-3x mb-3"></i>
+                                    <p>No exams scheduled for this course yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Course Materials Tab -->
+                        <div class="tab-pane fade" id="materials" role="tabpanel">
+                            {% if course_materials %}
+                                <div class="row">
+                                    {% for material in course_materials %}
+                                    <div class="col-md-6 col-lg-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <h5 class="card-title mb-0">{{ material.title }}</h5>
+                                                    <span class="badge bg-primary">{{ material.get_material_type_display }}</span>
+                                                </div>
+                                                <p class="card-text">{{ material.description|truncatechars:100 }}</p>
+                                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                                    <div class="small text-muted">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        {{ material.created_at|date:"M d, Y" }}
+                                                    </div>
+                                                    <div class="small text-muted">
+                                                        <i class="fas fa-file me-1"></i>
+                                                        {{ material.get_file_size }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-transparent">
+                                                <a href="{{ material.file.url }}" class="btn btn-primary w-100" target="_blank">
+                                                    <i class="fas fa-download me-2"></i>Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-file-alt fa-3x mb-3"></i>
+                                    <p>No course materials available yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap 5 tabs are automatically initialized
+    // No additional JavaScript needed for basic tab functionality
+});
+</script>
+{% endblock %} 

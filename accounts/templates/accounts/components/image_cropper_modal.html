@@ -1,0 +1,261 @@
+{% load static %}
+
+<!-- Image Cropper Modal -->
+<div class="modal fade" id="imageCropperModal" tabindex="-1" aria-labelledby="imageCropperModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageCropperModalLabel">Crop Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="cropperImage" src="" alt="Image to crop">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="cropButton">Crop & Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
+<!-- Cropper.js JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<style>
+.img-container {
+    max-height: 400px;
+    width: 100%;
+    overflow: hidden;
+}
+
+#cropperImage {
+    max-width: 100%;
+    display: block;
+}
+
+.cropper-view-box,
+.cropper-face {
+    border-radius: 50%;
+}
+
+.cropper-modal {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.cropper-view-box {
+    box-shadow: 0 0 0 1px #39f;
+    outline: 0;
+}
+
+.cropper-point {
+    background-color: #39f;
+    width: 10px;
+    height: 10px;
+    opacity: 0.75;
+}
+
+.cropper-line {
+    background-color: #39f;
+    opacity: 0.5;
+}
+
+#cropButton {
+    position: relative;
+}
+
+#cropButton.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+#cropButton.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+</style>
+
+<script>
+let cropper = null;
+let originalFile = null;
+
+function initializeCropper(imageFile) {
+    const modal = document.getElementById('imageCropperModal');
+    const image = document.getElementById('cropperImage');
+    const cropButton = document.getElementById('cropButton');
+    
+    // Create a URL for the image file
+    const imageUrl = URL.createObjectURL(imageFile);
+    image.src = imageUrl;
+    
+    // Initialize cropper when the modal is shown
+    modal.addEventListener('shown.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+        }
+        
+        cropper = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+            ready: function() {
+                // Set initial crop box to be circular
+                const containerData = cropper.getContainerData();
+                const size = Math.min(containerData.width, containerData.height);
+                cropper.setCropBoxData({
+                    width: size,
+                    height: size,
+                    left: (containerData.width - size) / 2,
+                    top: (containerData.height - size) / 2
+                });
+            }
+        });
+    });
+    
+    // Clean up when modal is hidden
+    modal.addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        URL.revokeObjectURL(imageUrl);
+    });
+    
+    // Handle crop button click
+    cropButton.onclick = async function() {
+        if (!cropper) {
+            return;
+        }
+
+        try {
+            // Show loading state
+            cropButton.classList.add('loading');
+            cropButton.disabled = true;
+
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, originalFile.type, 0.95));
+            
+            if (!blob) {
+                throw new Error('Failed to create blob from canvas');
+            }
+
+            const croppedFile = new File([blob], originalFile.name, {
+                type: originalFile.type,
+                lastModified: new Date().getTime()
+            });
+            
+            // Create FormData
+            const formData = new FormData();
+            formData.append('photo', croppedFile);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            // Get the upload URL from the form
+            const form = document.querySelector('form[enctype="multipart/form-data"]');
+            const uploadUrl = form.action;
+
+            // Upload the cropped image
+            const response = await fetch(uploadUrl, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            // Close the modal
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            modalInstance.hide();
+
+            // Reload the page to show the new image
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error during crop and upload:', error);
+            alert('Failed to upload the image. Please try again.');
+        } finally {
+            // Reset button state
+            cropButton.classList.remove('loading');
+            cropButton.disabled = false;
+        }
+    };
+}
+
+// Function to handle file input change
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        originalFile = input.files[0];
+        
+        // Check if file is an image
+        if (!originalFile.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            input.value = '';
+            return;
+        }
+        
+        // Check file size (max 5MB)
+        if (originalFile.size > 5 * 1024 * 1024) {
+            alert('Image size should not exceed 5MB.');
+            input.value = '';
+            return;
+        }
+        
+        // Show the cropper modal
+        const modal = new bootstrap.Modal(document.getElementById('imageCropperModal'));
+        modal.show();
+        
+        // Initialize cropper with the selected image
+        initializeCropper(originalFile);
+    }
+}
+
+// Add event listeners to all file inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInputs = document.querySelectorAll('input[type="file"][name="photo"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            handleFileSelect(this);
+        });
+    });
+});
+</script> 

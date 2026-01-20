@@ -1,0 +1,258 @@
+{% extends 'accounts/base_admin.html' %}
+{% load static %}
+
+{% block title %}Add New Student - School Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Add New Student</h5>
+                </div>
+                <div class="col text-end">
+                    <a href="{% url 'students' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Students
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Personal Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Personal Information</h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Student ID</label>
+                        {{ form.student_id }}
+                        {% if form.student_id.errors %}
+                        <div class="text-danger">{{ form.student_id.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Photo</label>
+                        {{ form.photo }}
+                        {% if form.photo.errors %}
+                        <div class="text-danger">{{ form.photo.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date of Birth</label>
+                        {{ form.date_of_birth }}
+                        {% if form.date_of_birth.errors %}
+                        <div class="text-danger">{{ form.date_of_birth.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Gender</label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}
+                        <div class="text-danger">{{ form.gender.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Contact Information</h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Phone Number</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                        <div class="text-danger">{{ form.phone_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Address</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                        <div class="text-danger">{{ form.address.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Academic Information</h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Grade Level</label>
+                        {{ form.grade_level }}
+                        {% if form.grade_level.errors %}
+                        <div class="text-danger">{{ form.grade_level.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Admission Date</label>
+                        {{ form.admission_date }}
+                        {% if form.admission_date.errors %}
+                        <div class="text-danger">{{ form.admission_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Guardian Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Guardian Information</h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Guardian Name</label>
+                        {{ form.guardian_name }}
+                        {% if form.guardian_name.errors %}
+                        <div class="text-danger">{{ form.guardian_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Relationship</label>
+                        {{ form.guardian_relation }}
+                        {% if form.guardian_relation.errors %}
+                        <div class="text-danger">{{ form.guardian_relation.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Guardian Phone</label>
+                        {{ form.guardian_phone }}
+                        {% if form.guardian_phone.errors %}
+                        <div class="text-danger">{{ form.guardian_phone.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Guardian Email</label>
+                        {{ form.guardian_email }}
+                        {% if form.guardian_email.errors %}
+                        <div class="text-danger">{{ form.guardian_email.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Password Fields -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Account Security</h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="text-danger">{{ form.password1.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="text-danger">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Student
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const firstNameInput = document.querySelector('input[name="first_name"]');
+    const lastNameInput = document.querySelector('input[name="last_name"]');
+
+    // Name validation function
+    function validateName(name) {
+        return /^[a-zA-Z\s]*$/.test(name);
+    }
+
+    // Function to show popup message
+    function showPopup(input, message) {
+        // Remove any existing popup
+        const existingPopup = input.parentElement.querySelector('.name-validation-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Create and show new popup
+        const popup = document.createElement('div');
+        popup.className = 'name-validation-popup';
+        popup.style.cssText = `
+            position: absolute;
+            background-color: #ff4444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+            z-index: 1000;
+        `;
+        popup.textContent = message;
+        input.parentElement.style.position = 'relative';
+        input.parentElement.appendChild(popup);
+    }
+
+    // Add input event listeners for real-time validation
+    firstNameInput.addEventListener('input', function() {
+        if (!validateName(this.value)) {
+            showPopup(this, 'Name should contain only characters');
+            this.style.borderColor = '#ff4444';
+        } else {
+            const popup = this.parentElement.querySelector('.name-validation-popup');
+            if (popup) popup.remove();
+            this.style.borderColor = '';
+        }
+    });
+
+    lastNameInput.addEventListener('input', function() {
+        if (!validateName(this.value)) {
+            showPopup(this, 'Name should contain only characters');
+            this.style.borderColor = '#ff4444';
+        } else {
+            const popup = this.parentElement.querySelector('.name-validation-popup');
+            if (popup) popup.remove();
+            this.style.borderColor = '';
+        }
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        if (!validateName(firstNameInput.value) || !validateName(lastNameInput.value)) {
+            e.preventDefault();
+            alert('First name and last name must contain only characters');
+        }
+    });
+});
+</script>
+{% endblock %} 

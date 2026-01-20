@@ -1,0 +1,206 @@
+{% extends 'accounts/reports/base_report.html' %}
+
+{% block report_filters %}
+<div class="mb-4">
+    <h5 class="text-muted">Teacher: {{ teacher.get_full_name }}</h5>
+    <h5 class="text-muted">Report Type: {{ report_type }}</h5>
+    <h5 class="text-muted">Period: {{ start_date }} to {{ end_date }}</h5>
+</div>
+{% endblock %}
+
+{% block report_content %}
+<div class="row">
+    <!-- Overall Performance Summary -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Overall Performance Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ overall_stats.total_subjects }}</h3>
+                            <p class="text-muted mb-0">Total Subjects</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ overall_stats.total_students }}</h3>
+                            <p class="text-muted mb-0">Total Students</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ overall_stats.overall_avg_score }}%</h3>
+                            <p class="text-muted mb-0">Average Score</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="mb-1">{{ overall_stats.overall_pass_rate }}%</h3>
+                            <p class="text-muted mb-0">Overall Pass Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Performance Table -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Subject Performance Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Class</th>
+                                <th>Students</th>
+                                <th>Average Score</th>
+                                <th>Pass Rate</th>
+                                <th>Top Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject in subject_performance %}
+                            <tr>
+                                <td>{{ subject.subject.title }}</td>
+                                <td>{{ subject.class_name }}</td>
+                                <td>{{ subject.student_count }}</td>
+                                <td>
+                                    {{ subject.average_score }}%
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ subject.average_score }}%;" 
+                                             aria-valuenow="{{ subject.average_score }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ subject.pass_rate }}%
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ subject.pass_rate }}%;" 
+                                             aria-valuenow="{{ subject.pass_rate }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ subject.top_score }}%</td>
+                                <td>
+                                    {% if subject.average_score >= 80 %}
+                                        <span class="badge bg-success">Excellent</span>
+                                    {% elif subject.average_score >= 70 %}
+                                        <span class="badge bg-info">Good</span>
+                                    {% elif subject.average_score >= 60 %}
+                                        <span class="badge bg-warning">Fair</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No performance data available for the selected period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Average Scores by Subject</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="averageScoresChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Pass Rates by Subject</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="passRatesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prepare data for charts
+    const subjects = {{ subject_performance|safe }};
+    const labels = subjects.map(s => s.subject.title);
+    const averageScores = subjects.map(s => s.average_score);
+    const passRates = subjects.map(s => s.pass_rate);
+
+    // Average Scores Chart
+    new Chart(document.getElementById('averageScoresChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Average Score (%)',
+                data: averageScores,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Pass Rates Chart
+    new Chart(document.getElementById('passRatesChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Pass Rate (%)',
+                data: passRates,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

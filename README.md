@@ -1,130 +1,131 @@
-# School Management System (SMS) – Kubernetes Deployment 🚀
+# 📘 SMS – Kubernetes GitOps Production Project
 
-This repository contains **Kubernetes manifests** for deploying a **School Management System (SMS)** application on an AWS EC2–based Kubernetes cluster.
-
-The application image is **already built and pushed to Docker Hub**, and Kubernetes directly pulls and runs the image.
-
----
-
-## 🔧 Tech Stack
-
-* **Backend:** Django
-* **Database:** PostgreSQL
-* **Containerization:** Docker
-* **Orchestration:** Kubernetes
-* **Cloud:** AWS EC2 (Ubuntu)
-* **Container Registry:** Docker Hub
+A **production-ready School Management System (SMS)** deployed on Kubernetes using **GitOps with ArgoCD**.
+This project demonstrates real-world DevOps practices: containerization, stateful workloads, health checks, and automated deployments.
 
 ---
 
-## 📦 Docker Image
+## 🚀 Live URLs
 
-Pre-built Docker image used by Kubernetes:
-
-```
-sohail28/sms:latest
-```
-
-No image build is performed inside Kubernetes.
+* **Frontend:** [http://sohaildevops.site](http://sohaildevops.site)
+* **Backend API:** [http://sohaildevops.site/api](http://sohaildevops.site/api)
+* **Health Check:** [http://sohaildevops.site/healthz/](http://sohaildevops.site/healthz/)
+* **ArgoCD UI:** http://<NODE-IP>:8080
 
 ---
 
-## 📁 Repository Structure
+## 🧱 Architecture
 
 ```
-.
-├── k8s/
+Users
+  │
+  ▼
+NGINX Ingress Controller
+  │
+  ├── React Frontend (Deployment + ClusterIP)
+  │
+  └── Django Backend (Deployment + ClusterIP)
+        │
+        └── PostgreSQL (StatefulSet + PVC)
+```
+
+---
+
+## ⚙️ Technology Stack
+
+* **Kubernetes** (kubeadm)
+* **Docker**
+* **ArgoCD** (GitOps)
+* **Django + Gunicorn** (Backend)
+* **React** (Frontend)
+* **PostgreSQL** (StatefulSet)
+* **NGINX Ingress Controller**
+* **Calico CNI**
+* **Metrics Server**
+* **HPA & PDB**
+* **Dynamic PVC via StorageClass**
+
+---
+
+## 📂 Repository Structure
+
+```
+sms-gitops/
+├── namespace.yaml
+├── backend/
 │   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   └── secret.yaml
-└── README.md
-```
-
-This repository is intentionally focused on **Kubernetes deployment only**.
-
----
-
-## 🚀 Deployment Steps
-
-### 1️⃣ Prerequisites
-
-* Kubernetes cluster running
-* `kubectl` configured
-* Internet access to pull Docker images
-
----
-
-### 2️⃣ Deploy to Kubernetes
-
-```bash
-kubectl apply -f k8s/
-```
-
-Verify:
-
-```bash
-kubectl get pods
-kubectl get svc
+│   └── service.yaml
+├── frontend/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── database/
+│   ├── postgres-statefulset.yaml
+│   └── service.yaml
+├── ingress/
+│   └── sms-ingress.yaml
 ```
 
 ---
 
-## 🌐 Accessing the Application
+## 🔄 GitOps Workflow (ArgoCD)
 
-### Port Forward (Development / Demo)
+1. Developer pushes code or manifests to GitHub
+2. ArgoCD detects changes automatically
+3. Kubernetes cluster syncs to Git state
+4. Self-healing and auto-rollback enabled
 
-```bash
-kubectl port-forward svc/sms-service 9090:80 --address 0.0.0.0
-```
-
-Browser:
-
-```
-http://<EC2-PUBLIC-IP>:9090/dashboard/
-```
-
-Available modules:
-
-* Dashboard
-* Students
-* Teachers
-* Courses
-* Calendar
-* Timetable
-* Reports
-* Examinations
+✔ No manual `kubectl apply`
+✔ Git is the single source of truth
 
 ---
 
-## 📊 Features
+## 🗄️ Database (Production Setup)
 
-* Student & Teacher Management
-* Course Management
-* Attendance Tracking
-* Calendar & Timetable
-* Exams & Reports
-* Admin Dashboard
+* PostgreSQL deployed as **StatefulSet**
+* **Dynamic PVC provisioning** using StorageClass
+* No manual PV/PVC creation
+* Persistent data survives pod restarts
 
 ---
 
-## 🧠 DevOps Design Decisions
+## ❤️ Health Checks (Production)
 
-* Docker used only for image creation
-* Kubernetes handles runtime orchestration
-* No docker-compose (not used in Kubernetes)
-* Simple and clean deployment flow
+* Django exposes `/healthz/`
+* Kubernetes **liveness & readiness probes** enabled
+* Supports **zero-downtime rolling updates**
+
+---
+
+## 🧪 Migrations (Production Safe)
+
+* Django migrations executed via **InitContainer**
+* App starts only after migrations succeed
+* Fully automated & GitOps-friendly
+
+---
+
+## 🔐 Security Notes (Next Improvements)
+
+* Database credentials should be moved to **Kubernetes Secrets**
+* TLS (HTTPS) can be enabled via **cert-manager**
+* ArgoCD admin access should be restricted
 
 ---
 
 ## 👨‍💻 Author
 
 **Mohammed Sohail**
-DevOps Engineer (Fresher / 0–2 Years)
+DevOps Engineer
+
+* GitHub: [https://github.com/sohail-24](https://github.com/sohail-24)
+* Docker Hub: [https://hub.docker.com/u/sohail28](https://hub.docker.com/u/sohail28)
 
 ---
 
-## 📌 Notes
+## 🏁 Project Status
 
-* Ideal for learning and demos
-* CI/CD can be added later if required
+✅ Production-ready
+✅ GitOps enabled
+✅ Stateful database
+✅ Health checks & migrations
+✅ Interview-ready DevOps project

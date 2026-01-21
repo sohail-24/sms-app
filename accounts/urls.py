@@ -1,8 +1,13 @@
+from django.http import JsonResponse
 from django.urls import path
+def healthz(request):
+    return JsonResponse({"status": "ok"})
+
 from . import views
 
 urlpatterns = [
     # Authentication URLs
+    path('healthz/', healthz, name='healthz'),
     path('', views.index_view, name='index'),
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),

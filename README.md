@@ -129,3 +129,101 @@ DevOps Engineer
 ✅ Stateful database
 ✅ Health checks & migrations
 ✅ Interview-ready DevOps project
+
+
+
+
+
+
+# cPanel Hosting Setup on AlmaLinux (Production-Style)
+
+## 📌 Overview
+
+This project demonstrates a **real-world web hosting setup** using **AlmaLinux 9** and **cPanel/WHM**, integrated with **Cloudflare DNS**. It simulates how companies host websites, manage domains and sub-domains, and provide professional email services on a single server.
+
+The project focuses on **infrastructure fundamentals**, not just application deployment, making it highly relevant for DevOps and system administration roles.
+
+---
+
+## 🏗️ Architecture
+
+```
+User Browser
+     ↓
+Domain (sohaildevops.site)
+     ↓
+Cloudflare (DNS + Security)
+     ↓
+Public IP (Server)
+     ↓
+AlmaLinux 9
+     ↓
+cPanel / WHM
+     ├─ Websites
+     ├─ Sub-domains
+     ├─ Email Services
+     └─ Databases
+```
+
+---
+
+## ⚙️ Technologies Used
+
+* **Operating System:** AlmaLinux 9 (ARM)
+* **Hosting Panel:** cPanel & WHM
+* **DNS & Security:** Cloudflare
+* **Web Server:** Apache / Nginx (via cPanel)
+* **Mail Services:** Exim, Dovecot
+* **Virtualization:** VMware Fusion
+
+---
+
+## 🚀 Features
+
+* Production-style Linux server setup
+* cPanel & WHM installation and configuration
+* Primary domain and multiple sub-domain hosting
+* Professional email setup (e.g. [admin@sohaildevops.site](mailto:admin@sohaildevops.site))
+* DNS management using Cloudflare
+* Secure and scalable hosting architecture
+
+---
+
+## 🎯 Learning Outcomes
+
+* Understanding of real hosting and shared server architecture
+* Hands-on experience with Linux system administration
+* Practical knowledge of DNS, domains, and email systems
+* Exposure to production workflows used by hosting companies
+
+---
+
+## 📌 Use Case
+
+This setup is commonly used by:
+
+* Hosting companies
+* SaaS platforms
+* Startups managing multiple applications
+* Organizations requiring domain-based email hosting
+
+---
+
+## 🧠 Why This Project Matters
+
+While modern platforms use containers and Kubernetes, **traditional hosting and email infrastructure is still widely used in production**. This project builds a strong foundation that complements modern DevOps tools.
+
+---
+
+## 📄 Domain Used
+
+* **Main Domain:** `sohaildevops.site`
+* **Sub-domains:** Configured via cPanel
+
+---
+
+## 📬 Author
+
+**Mohammed Sohail**
+Aspiring DevOps Engineer
+

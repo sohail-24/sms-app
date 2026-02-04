@@ -419,3 +419,271 @@ class OllamaClient:
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+file: interface/cli.py
+
+
+
+#!/usr/bin/env python3
+"""
+Command-Line Interface for DevOps AI Agent
+
+Provides an interactive CLI for interacting with the agent.
+"""
+
+import asyncio
+import sys
+from pathlib import Path
+from typing import Optional
+
+import click
+import structlog
+from rich.console import Console
+from rich.panel import Panel
+from rich.markdown import Markdown
+from rich.syntax import Syntax
+from rich.spinner import Spinner
+from rich.live import Live
+
+# Add parent to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from agent.core import DevOpsAgent, AgentConfig
+from llm.client import OllamaClient
+from tools.base import tool_registry
+from tools.docker.tool import DockerTool
+from security.command_filter import CommandFilter
+
+console = Console()
+logger = structlog.get_logger()
+
+
+@click.group()
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
+@click.option('--model', '-m', default='qwen2.5:7b', help='Model to use')
+@click.option('--config', '-c', type=click.Path(), help='Config file path')
+@click.pass_context
+def cli(ctx, verbose, model, config):
+    """DevOps AI Agent - Your local DevOps assistant."""
+    ctx.ensure_object(dict)
+    ctx.obj['verbose'] = verbose
+    ctx.obj['model'] = model
+    ctx.obj['config'] = config
+    
+    # Setup logging
+    if verbose:
+        structlog.configure(
+            wrapper_class=structlog.make_filtering_bound_logger(10)
+        )
+
+
+@cli.command()
+@click.pass_context
+def chat(ctx):
+    """Start interactive chat session."""
+    model = ctx.obj['model']
+    
+    console.print(Panel.fit(
+        f"[bold blue]DevOps AI Agent[/bold blue]\\n"
+        f"Model: [green]{model}[/green] | "
+        f"Type [yellow]'exit'[/yellow] or [yellow]'quit'[/yellow] to exit",
+        title="Welcome",
+        border_style="blue"
+    ))
+    
+    # Check Ollama connection
+    asyncio.run(_check_ollama())
+    
+    # Initialize agent
+    agent = asyncio.run(_init_agent(model))
+    
+    # Chat loop
+    while True:
+        try:
+            user_input = console.input("\\n[bold green]You:[/bold green] ")
+            
+            if user_input.lower() in ['exit', 'quit', 'q']:
+                console.print("[yellow]Goodbye![/yellow]")
+                break
+            
+            if user_input.lower() == 'clear':
+                agent.clear_context()
+                console.print("[dim]Context cleared.[/dim]")
+                continue
+            
+            if user_input.lower().startswith('/'):
+                _handle_command(user_input, agent)
+                continue
+            
+            # Process input
+            console.print("[bold blue]Agent:[/bold blue] ", end="")
+            
+            response_chunks = []
+            async for chunk in agent.chat(user_input):
+                console.print(chunk, end="")
+                response_chunks.append(chunk)
+            
+            console.print()  # Newline after response
+            
+        except KeyboardInterrupt:
+            console.print("\\n[yellow]Interrupted. Type 'exit' to quit.[/yellow]")
+        except EOFError:
+            break
+
+
+@cli.command()
+@click.argument('task')
+@click.option('--dry-run', is_flag=True, help='Show what would be done')
+@click.pass_context
+def run(ctx, task, dry_run):
+    """Execute a single task."""
+    model = ctx.obj['model']
+    
+    console.print(f"[dim]Task: {task}[/dim]")
+    console.print(f"[dim]Model: {model}[/dim]\\n")
+    
+    if dry_run:
+        console.print("[yellow]Dry run mode - no commands will be executed[/yellow]\\n")
+    
+    agent = asyncio.run(_init_agent(model))
+    
+    console.print("[bold blue]Agent:[/bold blue] ", end="")
+    
+    async def process():
+        async for chunk in agent.chat(task):
+            console.print(chunk, end="")
+    
+    asyncio.run(process())
+    console.print()
+
+
+@cli.command()
+def tools():
+    """List available tools."""
+    console.print("[bold]Available Tools:[/bold]\\n")
+    
+    # Import all tools to register them
+    from tools.docker.tool import DockerTool
+    
+    all_tools = tool_registry.list_all()
+    
+    for tool_info in all_tools:
+        status = "[green]✓[/green]" if tool_info['available'] else "[red]✗[/red]"
+        console.print(f"{status} [bold]{tool_info['name']}[/bold]")
+        console.print(f"  {tool_info['description']}")
+        
+        if tool_info['operations']:
+            console.print("  Operations:")
+            for op in tool_info['operations'][:5]:  # Show first 5
+                risk = op.get('risk_level', 'safe')
+                risk_color = {
+                    'safe': 'green',
+                    'read_only': 'blue',
+                    'approval': 'yellow',
+                    'blocked': 'red'
+                }.get(risk, 'white')
+                console.print(f"    • {op['name']} ([{risk_color}]{risk}[/{risk_color}])")
+        
+        console.print()
+
+
+@cli.command()
+def models():
+    """List available Ollama models."""
+    asyncio.run(_list_models())
+
+
+async def _check_ollama():
+    """Check Ollama connection."""
+    async with OllamaClient() as client:
+        if await client.check_connection():
+            console.print("[dim]Connected to Ollama[/dim]\\n")
+        else:
+            console.print("[red]Error: Cannot connect to Ollama.[/red]")
+            console.print("[dim]Make sure Ollama is running on localhost:11434[/dim]")
+            sys.exit(1)
+
+
+async def _init_agent(model: str) -> DevOpsAgent:
+    """Initialize the agent."""
+    llm_client = OllamaClient()
+    
+    # Load security config
+    config_path = Path(__file__).parent.parent / "config" / "security.yaml"
+    command_filter = CommandFilter(str(config_path) if config_path.exists() else None)
+    
+    # Register tools
+    docker_tool = DockerTool()
+    tool_registry.register(docker_tool)
+    
+    agent_config = AgentConfig(model=model)
+    
+    return DevOpsAgent(
+        llm_client=llm_client,
+        tool_registry=tool_registry,
+        command_filter=command_filter,
+        config=agent_config
+    )
+
+
+def _handle_command(cmd: str, agent: DevOpsAgent):
+    """Handle special commands."""
+    if cmd == '/status':
+        state = agent.get_state()
+        console.print(f"[dim]Agent state: {state.value}[/dim]")
+    
+    elif cmd == '/context':
+        history = agent.get_conversation_history()
+        console.print(f"[dim]Messages in context: {len(history)}[/dim]")
+    
+    elif cmd == '/help':
+        console.print("""
+[bold]Special Commands:[/bold]
+  /status    - Show agent status
+  /context   - Show context info
+  /help      - Show this help
+  clear      - Clear conversation context
+  exit       - Exit the chat
+        """)
+    
+    else:
+        console.print(f"[yellow]Unknown command: {cmd}[/yellow]")
+
+
+async def _list_models():
+    """List available models."""
+    async with OllamaClient() as client:
+        try:
+            models = await client.list_models()
+            
+            console.print("[bold]Available Models:[/bold]\\n")
+            
+            for model in models:
+                name = model.get('name', 'unknown')
+                size = model.get('size', 0)
+                size_str = _format_size(size)
+                
+                console.print(f"• [bold]{name}[/bold] ({size_str})")
+                
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+
+
+def _format_size(size_bytes: int) -> str:
+    """Format byte size to human readable."""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f} PB"
+
+
+if __name__ == '__main__':
+    cli()
+

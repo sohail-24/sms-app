@@ -1,0 +1,417 @@
+"""
+Ollama Client
+
+Wrapper around Ollama's HTTP API with:
+- Connection pooling
+- Retry logic
+- Streaming support
+- Error handling
+"""
+
+from typing import List, Dict, Any, Optional, AsyncIterator, Union
+from dataclasses import dataclass
+import json
+import asyncio
+
+import httpx
+import structlog
+
+logger = structlog.get_logger()
+
+
+@dataclass
+class ChatMessage:
+    """Chat message format."""
+    role: str  # system, user, assistant, tool
+    content: str
+    images: Optional[List[str]] = None
+    tool_calls: Optional[List[Dict]] = None
+
+
+@dataclass
+class GenerationResponse:
+    """Response from generate endpoint."""
+    response: str
+    done: bool
+    context: Optional[List[int]] = None
+    total_duration: Optional[int] = None
+    load_duration: Optional[int] = None
+    prompt_eval_count: Optional[int] = None
+    eval_count: Optional[int] = None
+
+
+@dataclass
+class ChatResponse:
+    """Response from chat endpoint."""
+    message: ChatMessage
+    done: bool
+    total_duration: Optional[int] = None
+    load_duration: Optional[int] = None
+    prompt_eval_count: Optional[int] = None
+    eval_count: Optional[int] = None
+
+
+class OllamaClient:
+    """
+    Client for Ollama HTTP API.
+    
+    Endpoints:
+    - POST /api/generate - Generate completion
+    - POST /api/chat - Chat completion
+    - POST /api/embed - Generate embeddings
+    - GET /api/tags - List models
+    """
+    
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        timeout: float = 120.0,
+        max_retries: int = 3
+    ):
+        self.base_url = base_url.rstrip('/')
+        self.timeout = timeout
+        self.max_retries = max_retries
+        
+        # HTTP client with connection pooling
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout),
+            limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+            http2=True
+        )
+        
+        self.logger = structlog.get_logger()
+    
+    async def generate(
+        self,
+        model: str,
+        prompt: str,
+        system: Optional[str] = None,
+        template: Optional[str] = None,
+        context: Optional[List[int]] = None,
+        stream: bool = False,
+        raw: bool = False,
+        format: Optional[str] = None,  # json or JSON schema
+        images: Optional[List[str]] = None,
+        options: Optional[Dict[str, Any]] = None,
+        keep_alive: Optional[str] = "5m"
+    ) -> Union[str, AsyncIterator[str]]:
+        """
+        Generate a completion.
+        
+        Args:
+            model: Model name (e.g., "llama3.2:3b")
+            prompt: Prompt text
+            system: System message
+            template: Custom prompt template
+            context: Conversation context from previous call
+            stream: Whether to stream response
+            raw: Whether to use raw prompt (no template)
+            format: Response format (json or schema)
+            images: Base64-encoded images for multimodal
+            options: Model parameters (temperature, etc.)
+            keep_alive: How long to keep model loaded
+            
+        Returns:
+            Complete response string, or async iterator if streaming
+        """
+        url = f"{self.base_url}/api/generate"
+        
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": stream
+        }
+        
+        if system:
+            payload["system"] = system
+        if template:
+            payload["template"] = template
+        if context:
+            payload["context"] = context
+        if raw:
+            payload["raw"] = raw
+        if format:
+            payload["format"] = format
+        if images:
+            payload["images"] = images
+        if options:
+            payload["options"] = options
+        if keep_alive:
+            payload["keep_alive"] = keep_alive
+        
+        if stream:
+            return self._generate_stream(url, payload)
+        
+        # Non-streaming
+        response_text = ""
+        for attempt in range(self.max_retries):
+            try:
+                response = await self.client.post(url, json=payload)
+                response.raise_for_status()
+                
+                data = response.json()
+                return data.get("response", "")
+                
+            except httpx.HTTPError as e:
+                self.logger.error("generate_request_failed", 
+                                attempt=attempt, error=str(e))
+                if attempt == self.max_retries - 1:
+                    raise
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+        
+        return response_text
+    
+    async def _generate_stream(
+        self, 
+        url: str, 
+        payload: Dict
+    ) -> AsyncIterator[str]:
+        """
+        Stream generate response.
+        
+        Args:
+            url: API endpoint
+            payload: Request payload
+            
+        Yields:
+            Response chunks
+        """
+        async with self.client.stream("POST", url, json=payload) as response:
+            response.raise_for_status()
+            
+            async for line in response.aiter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        chunk = data.get("response", "")
+                        if chunk:
+                            yield chunk
+                        
+                        if data.get("done"):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+    
+    async def chat(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict]] = None,
+        stream: bool = False,
+        format: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+        keep_alive: Optional[str] = "5m"
+    ) -> Union[ChatResponse, AsyncIterator[ChatResponse]]:
+        """
+        Chat completion with message history.
+        
+        Args:
+            model: Model name
+            messages: List of message dicts with role and content
+            tools: List of tool definitions for function calling
+            stream: Whether to stream response
+            format: Response format
+            options: Model parameters
+            keep_alive: How long to keep model loaded
+            
+        Returns:
+            ChatResponse or async iterator
+        """
+        url = f"{self.base_url}/api/chat"
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": stream
+        }
+        
+        if tools:
+            payload["tools"] = tools
+        if format:
+            payload["format"] = format
+        if options:
+            payload["options"] = options
+        if keep_alive:
+            payload["keep_alive"] = keep_alive
+        
+        if stream:
+            return self._chat_stream(url, payload)
+        
+        # Non-streaming
+        for attempt in range(self.max_retries):
+            try:
+                response = await self.client.post(url, json=payload)
+                response.raise_for_status()
+                
+                data = response.json()
+                return ChatResponse(
+                    message=ChatMessage(**data.get("message", {})),
+                    done=data.get("done", True),
+                    total_duration=data.get("total_duration"),
+                    load_duration=data.get("load_duration"),
+                    prompt_eval_count=data.get("prompt_eval_count"),
+                    eval_count=data.get("eval_count")
+                )
+                
+            except httpx.HTTPError as e:
+                self.logger.error("chat_request_failed", 
+                                attempt=attempt, error=str(e))
+                if attempt == self.max_retries - 1:
+                    raise
+                await asyncio.sleep(2 ** attempt)
+        
+        raise Exception("Max retries exceeded")
+    
+    async def _chat_stream(
+        self, 
+        url: str, 
+        payload: Dict
+    ) -> AsyncIterator[str]:
+        """
+        Stream chat response.
+        
+        Args:
+            url: API endpoint
+            payload: Request payload
+            
+        Yields:
+            Response content chunks
+        """
+        async with self.client.stream("POST", url, json=payload) as response:
+            response.raise_for_status()
+            
+            async for line in response.aiter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        message = data.get("message", {})
+                        content = message.get("content", "")
+                        if content:
+                            yield content
+                        
+                        if data.get("done"):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+    
+    async def embed(
+        self,
+        model: str,
+        input: Union[str, List[str]],
+        options: Optional[Dict[str, Any]] = None,
+        keep_alive: Optional[str] = "5m"
+    ) -> List[List[float]]:
+        """
+        Generate embeddings.
+        
+        Args:
+            model: Embedding model name
+            input: Text or list of texts to embed
+            options: Model parameters
+            keep_alive: How long to keep model loaded
+            
+        Returns:
+            List of embedding vectors
+        """
+        url = f"{self.base_url}/api/embed"
+        
+        payload = {
+            "model": model,
+            "input": input if isinstance(input, list) else [input]
+        }
+        
+        if options:
+            payload["options"] = options
+        if keep_alive:
+            payload["keep_alive"] = keep_alive
+        
+        response = await self.client.post(url, json=payload)
+        response.raise_for_status()
+        
+        data = response.json()
+        return data.get("embeddings", [])
+    
+    async def list_models(self) -> List[Dict[str, Any]]:
+        """
+        List available models.
+        
+        Returns:
+            List of model metadata
+        """
+        url = f"{self.base_url}/api/tags"
+        
+        response = await self.client.get(url)
+        response.raise_for_status()
+        
+        data = response.json()
+        return data.get("models", [])
+    
+    async def pull_model(
+        self, 
+        name: str, 
+        stream: bool = False
+    ) -> Union[Dict, AsyncIterator[Dict]]:
+        """
+        Pull a model from the registry.
+        
+        Args:
+            name: Model name to pull
+            stream: Whether to stream progress
+            
+        Returns:
+            Pull result or progress stream
+        """
+        url = f"{self.base_url}/api/pull"
+        payload = {"name": name, "stream": stream}
+        
+        if stream:
+            async def progress_stream():
+                async with self.client.stream("POST", url, json=payload) as response:
+                    async for line in response.aiter_lines():
+                        if line:
+                            yield json.loads(line)
+            return progress_stream()
+        
+        response = await self.client.post(url, json=payload)
+        response.raise_for_status()
+        return response.json()
+    
+    async def delete_model(self, name: str) -> Dict:
+        """
+        Delete a model.
+        
+        Args:
+            name: Model name to delete
+            
+        Returns:
+            Delete result
+        """
+        url = f"{self.base_url}/api/delete"
+        payload = {"name": name}
+        
+        response = await self.client.delete(url, json=payload)
+        response.raise_for_status()
+        return {"status": "deleted", "model": name}
+    
+    async def check_connection(self) -> bool:
+        """
+        Check if Ollama server is reachable.
+        
+        Returns:
+            True if connected
+        """
+        try:
+            response = await self.client.get(f"{self.base_url}/api/tags", timeout=5.0)
+            return response.status_code == 200
+        except Exception:
+            return False
+    
+    async def close(self):
+        """Close HTTP client."""
+        await self.client.aclose()
+    
+    async def __aenter__(self):
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
